@@ -31,7 +31,7 @@ function CartPage() {
   return (
     <>
       <Navbar />
-      <div className="w-full bg-[#0d0d0d] text-[#E5E5E5] min-h-screen pb-16">
+      <div className="w-full bg-black text-[#E5E5E5] min-h-screen pb-16">
         <div className="max-w-[1430px] mx-auto px-4 md:px-6 py-10 md:py-14">
           <h1 className="font-cormorant font-medium text-3xl md:text-4xl uppercase text-[#E5E5E5] mb-10">
             CART
@@ -47,7 +47,7 @@ function CartPage() {
               {cartItemsWithProduct.length === 0 ? (
                 <>
                   <p className="text-[#E5E5E5]/80 mb-4">Your cart is empty.</p>
-                  <Link to="/" className="text-[#E5E5E5] underline">
+                  <Link to="/collection" className="text-[#E5E5E5] underline">
                     Continue shopping
                   </Link>
                 </>

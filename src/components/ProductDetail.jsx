@@ -20,7 +20,7 @@ function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-[#0d0d0d]">
+      <div className="min-h-[60vh] flex items-center justify-center bg-black">
         <p className="text-[#D1C7B7]">Product not found.</p>
         <Link to="/" className="ml-4 text-[#D1C7B7] underline">Back to home</Link>
       </div>
@@ -31,31 +31,33 @@ function ProductDetail() {
   const similarProducts = getSimilarProducts(product.id, 3)
 
   return (
-    <div className="w-full bg-[#0d0d0d] text-[#D1C7B7] min-h-screen">
+    <div className="w-full bg-black text-[#D1C7B7] min-h-screen">
       <div className="max-w-[1430px] mx-auto px-4 md:px-6 py-10 md:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Left: Gallery */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex flex-col gap-2 order-2 md:order-1">
+          {/* Left: Gallery — mobile: main full width top, thumbnails row below; laptop: main large left, thumbnails stacked right */}
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_160px] lg:gap-4 lg:items-stretch">
+            {/* Main image: full width on mobile; laptop = large left (full height) */}
+            <div className="relative w-full aspect-[4/5] lg:aspect-auto lg:min-h-[520px] overflow-hidden bg-neutral-800">
+              <img
+                src={images[mainImage]}
+                alt={product.name}
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+            {/* Thumbnails: mobile = horizontal row; laptop = vertical stack on right, each ~half main height */}
+            <div className="flex flex-row gap-2 lg:flex-col lg:gap-3">
               {images.map((img, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setMainImage(i)}
-                  className={`w-16 h-20 md:w-20 md:h-24 overflow-hidden rounded border-2 flex-shrink-0 ${
+                  className={`w-20 h-24 flex-shrink-0 lg:w-full lg:flex-1 lg:min-h-0 overflow-hidden rounded border-2 ${
                     mainImage === i ? 'border-[#D1C7B7]' : 'border-[#333]'
                   }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
-            </div>
-            <div className="relative w-full aspect-[4/5] overflow-hidden bg-neutral-800 order-1 md:order-2 flex-1">
-              <img
-                src={images[mainImage]}
-                alt={product.name}
-                className="w-full h-full object-cover object-center"
-              />
             </div>
           </div>
 

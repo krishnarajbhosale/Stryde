@@ -2,7 +2,7 @@ import whiteLogo from '../assets/whitelogo.png'
 
 function Footer() {
   return (
-    <footer className="w-full bg-[#0d0d0d] text-[#E5E5E5]">
+    <footer className="w-full bg-black text-[#E5E5E5]">
       {/* Line above footer */}
       <div className="h-px w-full bg-[#D1C7B7]" aria-hidden />
 

@@ -2,8 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer base {
   body {
-    @apply min-h-screen bg-[#242424] text-[rgba(255,255,255,0.87)] antialiased;
+    @apply min-h-screen bg-black text-[rgba(255,255,255,0.87)] antialiased;
   }
 }

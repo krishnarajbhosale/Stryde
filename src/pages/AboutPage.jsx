@@ -19,7 +19,7 @@ function AboutPage() {
   return (
     <>
       <Navbar />
-      <div className="w-full min-h-screen bg-[#0d0d0d]">
+      <div className="w-full min-h-screen bg-black">
         {/* Main About section: textured background, two columns */}
         <section
           className="relative w-full min-h-[70vh] flex items-center py-12 md:py-20 overflow-hidden"
@@ -30,7 +30,7 @@ function AboutPage() {
             style={{ backgroundImage: `url(${aboutBg})` }}
             aria-hidden
           />
-          <div className="absolute inset-0 bg-[#0d0d0d]/70" aria-hidden />
+          <div className="absolute inset-0 bg-black/70" aria-hidden />
           <div className="relative z-10 max-w-[1430px] mx-auto px-4 md:px-6 w-full">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
               {/* Left: heading + body text */}

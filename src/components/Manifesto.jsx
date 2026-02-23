@@ -68,17 +68,17 @@ function Manifesto() {
         />
       </svg>
 
-      <div className="relative max-w-[1430px] min-h-0 md:min-h-[669px] mx-auto px-6 py-12 sm:py-16 md:py-20 lg:py-28 flex flex-col items-center justify-center text-center">
+      <div className="relative max-w-[1430px] min-h-[85vh] md:min-h-[669px] mx-auto px-6 py-16 sm:py-20 md:py-20 lg:py-28 flex flex-col items-center justify-center text-center">
         <p
           id="manifesto-heading"
-          className={`text-[#D1C7B7] text-xs md:text-sm font-normal tracking-[0.2em] uppercase mb-3 md:mb-4 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
+          className={`text-[#D1C7B7] text-xs md:text-sm font-normal tracking-[0.2em] uppercase mb-6 md:mb-4 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(0) : undefined}
         >
-          THE MANIFESTO.
+          THE MANIFESTO
         </p>
 
         <h2
-          className={`text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-cormorant font-medium leading-tight max-w-3xl ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
+          className={`text-[#E5E5E5] text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-cormorant font-medium leading-[1.25] md:leading-tight max-w-3xl mb-6 md:mb-8 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(1) : undefined}
         >
           Where Two Worlds
@@ -87,20 +87,20 @@ function Manifesto() {
         </h2>
 
         <div
-          className={`w-16 h-px bg-[#E5E5E5] my-3 md:my-2 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
+          className={`h-px bg-[#E5E5E5]/90 max-w-[35%] min-w-[120px] mx-auto my-4 md:my-2 md:w-16 md:max-w-none ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(2) : undefined}
           aria-hidden
         />
 
         <p
-          className={`text-[#E5E5E5] text-sm md:text-base max-w-2xl leading-relaxed text-center ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
+          className={`text-[#E5E5E5] font-cormorant text-base md:text-base max-w-2xl leading-[1.85] md:leading-relaxed text-center my-6 md:my-4 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(3) : undefined}
         >
           STRYDEEVA exists at the intersection of two worlds — where the richness of ethnic heritage meets the precision of modern design. We believe in clothing that speaks, in garments that carry stories, in fashion that moves with purpose.
         </p>
 
         <div
-          className={`w-16 h-px bg-[#E5E5E5] my-4 md:my-6 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
+          className={`h-px bg-[#E5E5E5]/90 max-w-[35%] min-w-[120px] mx-auto my-4 md:my-6 md:w-16 md:max-w-none ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(4) : undefined}
           aria-hidden
         />

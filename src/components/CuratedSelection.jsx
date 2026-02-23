@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ProductCard from './ProductCard'
 import { PRODUCTS } from '../data/products'
 
@@ -41,12 +41,29 @@ const INITIAL_COUNT = 3
 
 function CuratedSelection({ products = PRODUCTS, showAllProducts = false }) {
   const [expanded, setExpanded] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef(null)
   const visibleProducts = showAllProducts ? products : (expanded ? products : products.slice(0, INITIAL_COUNT))
   const hasMore = !showAllProducts && products.length > INITIAL_COUNT
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false)
+    }
+    const handleEscape = (e) => { if (e.key === 'Escape') setFilterOpen(false) }
+    if (filterOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [filterOpen])
+
   return (
     <section
-      className="w-full bg-[#1a1a1a] py-12 md:py-16"
+      className="w-full bg-black py-12 md:py-16"
       aria-labelledby="curated-heading"
     >
       <div className="max-w-[1430px] mx-auto px-4 md:px-6">
@@ -63,20 +80,56 @@ function CuratedSelection({ products = PRODUCTS, showAllProducts = false }) {
               Featured Collections
             </p>
           </div>
+          <div className="relative self-start sm:self-auto" ref={filterRef}>
           <button
             type="button"
-            className="flex items-center gap-2 text-[#E5E5E5] text-sm font-normal tracking-wide hover:opacity-80 transition-opacity self-start sm:self-auto"
+            onClick={() => setFilterOpen((o) => !o)}
+            className="flex items-center gap-2 text-[#E5E5E5] text-sm font-normal tracking-wide hover:opacity-80 transition-opacity"
             aria-label="Filter products"
+            aria-expanded={filterOpen}
+            aria-haspopup="true"
           >
             <FilterIcon />
             Filter
           </button>
+          {filterOpen && (
+            <div
+              className="absolute left-0 top-full mt-2 min-w-[160px] py-2 bg-black border border-[#D1C7B7]/40 rounded shadow-lg z-50"
+              role="menu"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
+                onClick={() => setFilterOpen(false)}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
+                onClick={() => setFilterOpen(false)}
+              >
+                New
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
+                onClick={() => setFilterOpen(false)}
+              >
+                Featured
+              </button>
+            </div>
+          )}
+        </div>
         </div>
 
-        {/* Product grid: 2 cols mobile, 3 cols laptop */}
-        <ul className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 list-none p-0 m-0">
+        {/* Product grid: 2 cols mobile, 3 cols laptop — items-stretch for equal height alignment */}
+        <ul className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 list-none p-0 m-0 items-stretch">
           {visibleProducts.map((product) => (
-            <li key={product.id ?? product.name}>
+            <li key={product.id ?? product.name} className="flex">
               <ProductCard product={product} />
             </li>
           ))}

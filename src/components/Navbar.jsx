@@ -32,13 +32,21 @@ function Navbar() {
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
 
+  useEffect(() => {
+    const handleEscape = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    if (menuOpen) {
+      window.addEventListener('keydown', handleEscape)
+      return () => window.removeEventListener('keydown', handleEscape)
+    }
+  }, [menuOpen])
+
   const closeMenu = () => setMenuOpen(false)
 
   return (
     <>
       <nav
         className={`sticky top-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 h-14 md:h-16 border-b border-[#D1C7B7] transition-colors duration-300 ${
-          scrolled ? 'bg-transparent' : 'bg-[#1a1a1a]'
+          scrolled ? 'bg-transparent' : 'bg-black'
         }`}
         aria-label="Main navigation"
       >
@@ -148,7 +156,7 @@ function Navbar() {
         />
       )}
       <div
-        className={`fixed top-0 left-0 z-40 w-full max-w-xs h-full bg-[#1a1a1a] border-r border-[#D1C7B7] shadow-xl transform transition-transform duration-300 ease-out md:hidden ${
+        className={`fixed top-0 left-0 z-40 w-full max-w-xs h-full bg-black border-r border-[#D1C7B7] shadow-xl transform transition-transform duration-300 ease-out md:hidden ${
           menuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-modal="true"

@@ -7,7 +7,6 @@ export const PRODUCTS = [
     images: [
       'https://picsum.photos/seed/greenblazer/500/625',
       'https://picsum.photos/seed/greenblazer2/500/625',
-      'https://picsum.photos/seed/greenblazer3/500/625',
     ],
     brand: 'STRYDEEVA',
     description: 'Regular fit blazer. Featuring a button-down collar and long sleeves with buttoned cuffs. Button-up front.',
