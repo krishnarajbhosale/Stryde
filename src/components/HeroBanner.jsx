@@ -25,14 +25,14 @@ function HeroBanner() {
           className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent lg:from-black/40 lg:via-transparent lg:to-transparent"
           aria-hidden
         />
-        {/* Mobile & tablet (iPad) only: text + button in one block, close together — hidden on laptop/PC (lg and up) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-3 pt-12 pb-6 sm:pt-14 lg:hidden w-full h-full overflow-visible">
-          <div className="flex flex-col items-center justify-center w-full max-w-[92%] min-h-0">
-            <div className="text-center text-white font-cormorant font-medium uppercase w-full overflow-visible">
-              <p className="leading-[1.2] tracking-[0.02em]" style={{ fontSize: 'clamp(1.75rem, 9vh, 5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>NOT JUST</p>
-              <p className="leading-[1.2] tracking-[0.02em] mt-1" style={{ fontSize: 'clamp(1.75rem, 9vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>CLOTHING.</p>
-              <p className="leading-[1.2] tracking-[0.02em] mt-3" style={{ fontSize: 'clamp(1.5rem, 7vh, 3.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>A</p>
-              <p className="leading-[1.2] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.875rem, 10vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards' }}>MOVEMENT.</p>
+        {/* Mobile & tablet (iPad) only: text + button in one block — hidden on laptop/PC (lg and up) */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-3 pt-14 pb-20 sm:pt-16 sm:pb-24 lg:hidden w-full h-full">
+          <div className="flex flex-col items-center justify-center w-full max-w-[92%]">
+            <div className="text-center text-white font-cormorant font-medium uppercase w-full">
+              <p className="leading-[1.15] tracking-[0.02em]" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>NOT JUST</p>
+              <p className="leading-[1.15] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>CLOTHING.</p>
+              <p className="leading-[1.15] tracking-[0.02em] mt-2" style={{ fontSize: 'clamp(1.25rem, 6vh, 3rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>A</p>
+              <p className="leading-[1.15] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards' }}>MOVEMENT.</p>
             </div>
             <Link
               to="/collection"
@@ -42,7 +42,7 @@ function HeroBanner() {
               SHOP COLLECTION
             </Link>
           </div>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex justify-center">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex justify-center">
             <ScrollIndicator />
           </div>
         </div>
