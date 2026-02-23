@@ -26,13 +26,13 @@ function HeroBanner() {
           aria-hidden
         />
         {/* Mobile & tablet (iPad) only: text + button in one block, close together — hidden on laptop/PC (lg and up) */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-3 py-6 lg:hidden w-full h-full">
-          <div className="flex flex-col items-center justify-center w-full max-w-[92%]">
-            <div className="text-center text-white font-cormorant font-medium uppercase w-full">
-              <p className="leading-[1.25] tracking-[0.02em]" style={{ fontSize: 'clamp(2.5rem, 13vh, 5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>NOT JUST</p>
-              <p className="leading-[1.25] tracking-[0.02em] mt-1" style={{ fontSize: 'clamp(2.5rem, 13vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>CLOTHING.</p>
-              <p className="leading-[1.25] tracking-[0.02em] mt-3" style={{ fontSize: 'clamp(2rem, 10vh, 3.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>A</p>
-              <p className="leading-[1.25] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(2.25rem, 12vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards' }}>MOVEMENT.</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-3 pt-12 pb-6 sm:pt-14 lg:hidden w-full h-full overflow-visible">
+          <div className="flex flex-col items-center justify-center w-full max-w-[92%] min-h-0">
+            <div className="text-center text-white font-cormorant font-medium uppercase w-full overflow-visible">
+              <p className="leading-[1.2] tracking-[0.02em]" style={{ fontSize: 'clamp(1.75rem, 9vh, 5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>NOT JUST</p>
+              <p className="leading-[1.2] tracking-[0.02em] mt-1" style={{ fontSize: 'clamp(1.75rem, 9vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>CLOTHING.</p>
+              <p className="leading-[1.2] tracking-[0.02em] mt-3" style={{ fontSize: 'clamp(1.5rem, 7vh, 3.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>A</p>
+              <p className="leading-[1.2] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.875rem, 10vh, 4.5rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards' }}>MOVEMENT.</p>
             </div>
             <Link
               to="/collection"
