@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
 function ProductCard({ product }) {
-  const { image, name, price, id, sizeInventories } = product
+  const { image, name, price, priceStrikethrough, id, sizeInventories } = product
   const { cart, addToCart, removeFromCart } = useCart()
   const allSoldOut = Array.isArray(sizeInventories) && sizeInventories.length > 0 && sizeInventories.every((s) => (s.quantity ?? 0) === 0)
   const cartIndex = cart.findIndex((item) => item.productId === id && item.size === 'M')
@@ -35,8 +35,11 @@ function ProductCard({ product }) {
           <span className="text-[#D1C7B7] text-sm md:text-base font-normal truncate">
             {name}
           </span>
-          <span className="text-[#D1C7B7] text-sm md:text-base font-normal flex-shrink-0">
-            {price}
+          <span className="text-[#D1C7B7] text-sm md:text-base font-normal flex-shrink-0 flex items-center gap-2">
+            {priceStrikethrough && (
+              <span className="line-through text-[#E5E5E5]/60">{priceStrikethrough}</span>
+            )}
+            <span>{price}</span>
           </span>
         </div>
       </Link>

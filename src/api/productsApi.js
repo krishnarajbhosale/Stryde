@@ -5,22 +5,21 @@
 
 const API_BASE = '/api/products'
 
-/** Amount shown less on storefront; GST line at checkout equals this per product so total stays same */
-export const DISPLAY_PRICE_DEDUCTION = 400
+/** Add-on shown as "original" price (crossed out). Discounted price = actual (no add-on). */
+export const PRICE_ADD_ON = 400
 
 function formatPrice(num) {
   if (num == null || Number.isNaN(num)) return '₹0'
   return '₹' + Number(num).toLocaleString('en-IN')
 }
 
-/** Normalize backend product to frontend shape: { id, name, price, actualPrice, image, images, brand, description, materialCare, sizes, sizeInventories }.
- * price = display price (actual - 400); actualPrice = number for totals and order. */
+/** Normalize backend product: price = discounted (what they pay), priceStrikethrough = original + 400 (crossed out), actualPrice = number for totals. */
 function normalizeProduct(p) {
   if (!p) return null
   const id = p.id != null ? String(p.id) : p.id
   const basicPrice = p.basicPrice != null ? Number(p.basicPrice) : 0
   const actualPrice = basicPrice
-  const displayPrice = Math.max(0, actualPrice - DISPLAY_PRICE_DEDUCTION)
+  const strikethroughPrice = actualPrice + PRICE_ADD_ON
   const imageUrls = p.imageUrls || []
   const firstImage = imageUrls[0] || ''
   const sizeInventories = (p.sizeInventories || []).map((s) => ({
@@ -31,7 +30,8 @@ function normalizeProduct(p) {
   return {
     id,
     name: p.name || '',
-    price: formatPrice(displayPrice),
+    price: formatPrice(actualPrice),
+    priceStrikethrough: formatPrice(strikethroughPrice),
     actualPrice,
     image: firstImage,
     images: imageUrls,

@@ -133,8 +133,11 @@ function ProductDetail() {
             <p className="text-sm uppercase tracking-wide text-[#D1C7B7] mb-2">
               {product.brand}
             </p>
-            <p className="text-2xl md:text-3xl font-medium text-[#D1C7B7] mb-1">
-              {product.price}
+            <p className="text-2xl md:text-3xl font-medium text-[#D1C7B7] mb-1 flex items-center gap-3">
+              {product.priceStrikethrough && (
+                <span className="line-through text-[#D1C7B7]/60">{product.priceStrikethrough}</span>
+              )}
+              <span>{product.price}</span>
             </p>
             <p className="text-xs uppercase text-[#D1C7B7]/90 mb-6">
               INCLUSIVE OF ALL TAXES

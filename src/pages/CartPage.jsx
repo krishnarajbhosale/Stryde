@@ -4,10 +4,10 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
 import { useCart } from '../context/CartContext'
-import { fetchProducts, DISPLAY_PRICE_DEDUCTION } from '../api/productsApi'
+import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 
 const PLATFORM_FEE = 50
-const DISCOUNT_PER_ORDER = 500
+const DISCOUNT_PER_ORDER = 0
 
 function CartPage() {
   const navigate = useNavigate()
@@ -35,8 +35,7 @@ function CartPage() {
     (sum, item) => sum + (item.product?.actualPrice ?? 0) * item.quantity,
     0
   )
-  const subtotalDisplay = totalMRP - DISPLAY_PRICE_DEDUCTION * totalQty
-  const gstTotal = DISPLAY_PRICE_DEDUCTION * totalQty
+  const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const totalAmount = totalMRP - discount + PLATFORM_FEE
 
@@ -117,7 +116,10 @@ function CartPage() {
                                 ))}
                               </select>
                             </div>
-                            <p className="text-sm font-medium text-[#E5E5E5]">{p.price}</p>
+                            <p className="text-sm font-medium text-[#E5E5E5]">
+                              {p.priceStrikethrough && <span className="line-through text-[#E5E5E5]/60 mr-2">{p.priceStrikethrough}</span>}
+                              <span>{p.price}</span>
+                            </p>
                             <p className="text-xs text-[#E5E5E5]/80 mt-0.5">
                               INCLUSIVE OF ALL TAXES
                             </p>
@@ -156,17 +158,19 @@ function CartPage() {
                   PRICE DETAILS :
                 </p>
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>SUBTOTAL</span>
-                  <span>₹{subtotalDisplay.toLocaleString('en-IN')}</span>
+                  <span>MRP</span>
+                  <span className="line-through text-[#D1C7B7]/70">₹{totalMRPStrikethrough.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>GST</span>
-                  <span>₹{gstTotal.toLocaleString('en-IN')}</span>
+                  <span>Price</span>
+                  <span>₹{totalMRP.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>DISCOUNT ON MRP</span>
-                  <span>- ₹{discount.toLocaleString('en-IN')}</span>
-                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-[#D1C7B7]">
+                    <span>DISCOUNT ON MRP</span>
+                    <span>- ₹{discount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
                   <span>PLATFORM FEE</span>
                   <span>₹{PLATFORM_FEE}</span>

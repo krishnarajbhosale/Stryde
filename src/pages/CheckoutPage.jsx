@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
-import { fetchProducts, DISPLAY_PRICE_DEDUCTION } from '../api/productsApi'
+import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 
 const PLATFORM_FEE = 50
-const DISCOUNT_PER_ORDER = 500
+const DISCOUNT_PER_ORDER = 0
 
 const inputUnderline =
   'w-full bg-transparent border-0 border-b border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide'
@@ -46,8 +46,7 @@ function CheckoutPage() {
     (sum, item) => sum + (item.product?.actualPrice ?? 0) * item.quantity,
     0
   )
-  const subtotalDisplay = totalMRP - DISPLAY_PRICE_DEDUCTION * totalQty
-  const gstTotal = DISPLAY_PRICE_DEDUCTION * totalQty
+  const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const totalAmount = totalMRP - discount + PLATFORM_FEE
 
@@ -96,7 +95,10 @@ function CheckoutPage() {
                       QTY: {item.quantity}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-[#E5E5E5] mt-2">{p.price}</p>
+                  <p className="text-sm font-medium text-[#E5E5E5] mt-2">
+                    {p.priceStrikethrough && <span className="line-through text-[#E5E5E5]/60 mr-2">{p.priceStrikethrough}</span>}
+                    <span>{p.price}</span>
+                  </p>
                   <p className="text-[10px] text-[#E5E5E5]/70 uppercase mt-0.5">
                     7 DAYS RETURN AVAILABLE
                   </p>
@@ -124,17 +126,19 @@ function CheckoutPage() {
       </p>
       <div className="space-y-2 text-sm text-[#E5E5E5]">
         <div className="flex justify-between">
-          <span>SUBTOTAL</span>
-          <span>₹{subtotalDisplay.toLocaleString('en-IN')}</span>
+          <span>MRP</span>
+          <span className="line-through text-[#E5E5E5]/70">₹{totalMRPStrikethrough.toLocaleString('en-IN')}</span>
         </div>
         <div className="flex justify-between">
-          <span>GST</span>
-          <span>₹{gstTotal.toLocaleString('en-IN')}</span>
+          <span>Price</span>
+          <span>₹{totalMRP.toLocaleString('en-IN')}</span>
         </div>
-        <div className="flex justify-between">
-          <span>DISCOUNT ON MRP</span>
-          <span>- ₹{discount.toLocaleString('en-IN')}</span>
-        </div>
+        {discount > 0 && (
+          <div className="flex justify-between">
+            <span>DISCOUNT ON MRP</span>
+            <span>- ₹{discount.toLocaleString('en-IN')}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>PLATFORM FEE</span>
           <span>₹{PLATFORM_FEE}</span>
