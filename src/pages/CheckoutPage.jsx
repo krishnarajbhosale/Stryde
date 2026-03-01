@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
-import { getProductById, parsePrice } from '../data/products'
+import { fetchProducts, parsePrice } from '../api/productsApi'
 
 const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 500
@@ -14,6 +14,8 @@ const inputUnderline =
 function CheckoutPage() {
   const navigate = useNavigate()
   const { cart, removeFromCart } = useCart()
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
     emailOrMobile: '',
     keepUpdated: false,
@@ -23,6 +25,16 @@ function CheckoutPage() {
     city: '',
     pinCode: '',
   })
+
+  useEffect(() => {
+    let cancelled = false
+    fetchProducts()
+      .then((data) => { if (!cancelled) setProducts(data || []) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const getProductById = (id) => products.find((p) => String(p.id) === String(id))
 
   const cartItemsWithProduct = cart.map((item) => ({
     ...item,
@@ -51,7 +63,7 @@ function CheckoutPage() {
 
   const handlePlaceOrder = (e) => {
     e.preventDefault()
-    navigate('/checkout/payment')
+    navigate('/checkout/payment', { state: { checkoutForm: form } })
   }
 
   if (cart.length === 0 && cartItemsWithProduct.length === 0) return null

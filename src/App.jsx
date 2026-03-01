@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { CartProvider } from './context/CartContext'
 import ScrollToTop from './components/ScrollToTop'
 import HomePage from './pages/HomePage'
 import ProductPage from './pages/ProductPage'
@@ -7,13 +8,16 @@ import CollectionPage from './pages/CollectionPage'
 import AboutPage from './pages/AboutPage'
 import CheckoutPage from './pages/CheckoutPage'
 import PaymentPage from './pages/PaymentPage'
+import OrderSuccessPage from './pages/OrderSuccessPage'
+import AdminLoginPage from './pages/AdminLoginPage'
 import './App.css'
 
 function App() {
   return (
-    <div className="min-h-screen">
-      <ScrollToTop />
-      <Routes>
+    <CartProvider>
+      <div className="min-h-screen">
+        <ScrollToTop />
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/collection" element={<CollectionPage />} />
         <Route path="/about" element={<AboutPage />} />
@@ -21,8 +25,11 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/checkout/payment" element={<PaymentPage />} />
-      </Routes>
-    </div>
+        <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route path="/adminlogin/101/*" element={<AdminLoginPage />} />
+        </Routes>
+      </div>
+    </CartProvider>
   )
 }
 

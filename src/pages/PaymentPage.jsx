@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
-import { getProductById, parsePrice } from '../data/products'
+import { fetchProducts, parsePrice } from '../api/productsApi'
+import { createOrder } from '../api/ordersApi'
 
 const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 500
 
-const PAYMENT_OPTIONS = [
+const ALL_PAYMENT_OPTIONS = [
   { id: 'cod', label: 'CASH ON DELIVERY' },
   { id: 'upi', label: 'UPI (PAY VIA ANY APP)' },
   { id: 'card', label: 'CREDIT / DEBIT CARD' },
@@ -17,13 +18,31 @@ const PAYMENT_OPTIONS = [
 
 function PaymentPage() {
   const navigate = useNavigate()
-  const { cart, removeFromCart } = useCart()
+  const location = useLocation()
+  const { cart, removeFromCart, clearCart } = useCart()
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
+  const checkoutForm = location.state?.checkoutForm
+
+  useEffect(() => {
+    let cancelled = false
+    fetchProducts()
+      .then((data) => { if (!cancelled) setProducts(data || []) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const getProductById = (id) => products.find((p) => String(p.id) === String(id))
 
   const cartItemsWithProduct = cart.map((item) => ({
     ...item,
     product: getProductById(item.productId),
   })).filter((item) => item.product)
+  const hasCustomSize = cart.some((item) => item.customSizeId != null)
+  const paymentOptions = hasCustomSize ? ALL_PAYMENT_OPTIONS.filter((o) => o.id !== 'cod') : ALL_PAYMENT_OPTIONS
 
   const totalMRP = cartItemsWithProduct.reduce(
     (sum, item) => sum + parsePrice(item.product?.price) * item.quantity,
@@ -40,10 +59,46 @@ function PaymentPage() {
     if (cart.length === 0) navigate('/cart', { replace: true })
   }, [cart.length, navigate])
 
-  const handlePlaceOrder = (e) => {
+  useEffect(() => {
+    if (!loading && cart.length > 0 && !checkoutForm) {
+      navigate('/checkout', { replace: true })
+    }
+  }, [loading, cart.length, checkoutForm, navigate])
+
+  const handlePlaceOrder = async (e) => {
     e.preventDefault()
-    if (!paymentMethod) return
-    // Optional: submit to backend, then redirect to success/thank-you
+    if (!paymentMethod || cartItemsWithProduct.length === 0 || !checkoutForm) return
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const customerName = [checkoutForm.firstName, checkoutForm.lastName].filter(Boolean).join(' ') || 'Customer'
+      const payload = {
+        customerEmail: String(checkoutForm.emailOrMobile || 'guest@strydeeva.com').trim(),
+        customerName: String(customerName).trim(),
+        shippingAddress: String(checkoutForm.address || '').trim(),
+        city: String(checkoutForm.city || '').trim(),
+        pinCode: String(checkoutForm.pinCode || '').trim(),
+        totalAmount: Number(totalAmount),
+        items: cartItemsWithProduct.map((item) => {
+          const obj = {
+            productId: Number(item.productId),
+            productName: String(item.product?.name || '').trim(),
+            sizeName: String(item.size || '').trim(),
+            quantity: Math.max(1, Number(item.quantity)),
+            unitPrice: Number(parsePrice(item.product?.price)) || 0,
+          }
+          if (item.customSizeId != null) obj.customSizeId = Number(item.customSizeId)
+          return obj
+        }),
+      }
+      const order = await createOrder(payload)
+      clearCart()
+      navigate('/order-success', { state: { orderNumber: order.orderNumber, orderId: order.id } })
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to place order. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (cart.length === 0) return null
@@ -130,7 +185,7 @@ function PaymentPage() {
         CHOOSE PAYMENT METHOD
       </h2>
       <div className="space-y-4">
-        {PAYMENT_OPTIONS.map((opt) => (
+        {paymentOptions.map((opt) => (
           <label
             key={opt.id}
             className="flex items-center gap-3 cursor-pointer group"
@@ -170,6 +225,10 @@ function PaymentPage() {
             <span className="font-medium text-[#E5E5E5]">PAYMENT</span>
           </p>
 
+          {submitError && (
+            <p className="text-red-400 text-sm mb-4">{submitError}</p>
+          )}
+
           {/* Mobile: single column — payment options, then order summary, then button */}
           <div className="block lg:hidden">
             <form onSubmit={handlePlaceOrder}>
@@ -183,10 +242,10 @@ function PaymentPage() {
 
               <button
                 type="submit"
-                disabled={!paymentMethod}
+                disabled={!paymentMethod || submitting}
                 className="w-full mt-8 py-3.5 px-4 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                PLACE YOUR ORDER
+                {submitting ? 'PLACING ORDER…' : 'PLACE YOUR ORDER'}
               </button>
             </form>
           </div>
@@ -207,10 +266,10 @@ function PaymentPage() {
                 </Link>
                 <button
                   type="submit"
-                  disabled={!paymentMethod}
+                  disabled={!paymentMethod || submitting}
                   className="py-3 px-8 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  PLACE YOUR ORDER
+                  {submitting ? 'PLACING ORDER…' : 'PLACE YOUR ORDER'}
                 </button>
               </div>
             </div>

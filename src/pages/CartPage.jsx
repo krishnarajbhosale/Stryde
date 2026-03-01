@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
 import { useCart } from '../context/CartContext'
-import { getProductById, getSimilarProducts, parsePrice, PRODUCTS } from '../data/products'
+import { fetchProducts, parsePrice } from '../api/productsApi'
 
 const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 500
@@ -11,6 +12,18 @@ const DISCOUNT_PER_ORDER = 500
 function CartPage() {
   const navigate = useNavigate()
   const { cart, removeFromCart, updateQuantity, updateSize } = useCart()
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchProducts()
+      .then((data) => { if (!cancelled) setProducts(data || []) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const getProductById = (id) => products.find((p) => String(p.id) === String(id))
 
   const cartItemsWithProduct = cart.map((item) => ({
     ...item,
@@ -24,9 +37,9 @@ function CartPage() {
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const totalAmount = totalMRP - discount + PLATFORM_FEE
 
-  const similarProducts = cartItemsWithProduct.length > 0
-    ? getSimilarProducts(cartItemsWithProduct[0].productId, 3)
-    : PRODUCTS.slice(0, 3)
+  const similarProducts = (loading || cartItemsWithProduct.length === 0)
+    ? products.slice(0, 3)
+    : products.filter((p) => String(p.id) !== String(cartItemsWithProduct[0].productId)).slice(0, 3)
 
   return (
     <>
@@ -72,17 +85,23 @@ function CartPage() {
                             </p>
                             <div className="h-px w-full max-w-[85%] bg-[#E5E5E5]/40 mb-3" aria-hidden />
                             <div className="flex flex-wrap gap-2 mb-2">
-                              <select
-                                value={item.size}
-                                onChange={(e) => updateSize(index, e.target.value)}
-                                className="text-xs uppercase bg-[#E8E4DF] border border-[#444] text-[#333] px-2.5 py-2 focus:outline-none focus:border-[#666] rounded-sm"
-                              >
-                                {p.sizes.map((s) => (
-                                  <option key={s} value={s} className="bg-[#E8E4DF] text-[#333]">
-                                    SIZE : {s}
-                                  </option>
-                                ))}
-                              </select>
+                              {item.size === 'Custom' || item.customSizeId ? (
+                                <span className="text-xs uppercase bg-[#E8E4DF] text-[#333] px-2.5 py-2 rounded-sm border border-[#444]">
+                                  SIZE : Custom
+                                </span>
+                              ) : (
+                                <select
+                                  value={item.size}
+                                  onChange={(e) => updateSize(index, e.target.value)}
+                                  className="text-xs uppercase bg-[#E8E4DF] border border-[#444] text-[#333] px-2.5 py-2 focus:outline-none focus:border-[#666] rounded-sm"
+                                >
+                                  {p.sizes.map((s) => (
+                                    <option key={s} value={s} className="bg-[#E8E4DF] text-[#333]">
+                                      SIZE : {s}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
                               <select
                                 value={item.quantity}
                                 onChange={(e) => updateQuantity(index, Number(e.target.value))}

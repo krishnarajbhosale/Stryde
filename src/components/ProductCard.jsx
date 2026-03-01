@@ -2,14 +2,16 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
 function ProductCard({ product }) {
-  const { image, name, price, id } = product
+  const { image, name, price, id, sizeInventories } = product
   const { cart, addToCart, removeFromCart } = useCart()
+  const allSoldOut = Array.isArray(sizeInventories) && sizeInventories.length > 0 && sizeInventories.every((s) => (s.quantity ?? 0) === 0)
   const cartIndex = cart.findIndex((item) => item.productId === id && item.size === 'M')
   const inCart = cartIndex >= 0
 
   const handleAddToCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    if (allSoldOut) return
     if (inCart) removeFromCart(cartIndex)
     else addToCart(id, 'M')
   }
@@ -23,6 +25,11 @@ function ProductCard({ product }) {
             alt={name}
             className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
           />
+          {allSoldOut && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[#E5E5E5] text-sm font-medium uppercase tracking-wide">
+              Sold out
+            </span>
+          )}
         </div>
         <div className="flex items-center justify-between text-left mb-3 flex-shrink-0">
           <span className="text-[#D1C7B7] text-sm md:text-base font-normal truncate">
@@ -36,14 +43,17 @@ function ProductCard({ product }) {
       <button
         type="button"
         onClick={handleAddToCart}
-        aria-label={inCart ? 'Remove from cart (undo)' : 'Add to cart'}
-        className={`w-full py-3 px-4 text-sm font-medium tracking-wide uppercase border border-[#D1C7B7] transition-all duration-300 ease-out active:scale-[0.98] select-none flex-shrink-0 mt-auto ${
-          inCart
-            ? 'bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90'
-            : 'text-[#D1C7B7] bg-transparent hover:bg-[#D1C7B7]/10'
+        disabled={allSoldOut}
+        aria-label={allSoldOut ? 'Sold out' : inCart ? 'Remove from cart (undo)' : 'Add to cart'}
+        className={`w-full py-3 px-4 text-sm font-medium tracking-wide uppercase border transition-all duration-300 ease-out active:scale-[0.98] select-none flex-shrink-0 mt-auto ${
+          allSoldOut
+            ? 'border-[#555] text-[#666] bg-[#222] cursor-not-allowed'
+            : inCart
+              ? 'border-[#D1C7B7] bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90'
+              : 'border-[#D1C7B7] text-[#D1C7B7] bg-transparent hover:bg-[#D1C7B7]/10'
         }`}
       >
-        {inCart ? 'ADDED TO CART' : 'ADD TO CART'}
+        {allSoldOut ? 'SOLD OUT' : inCart ? 'ADDED TO CART' : 'ADD TO CART'}
       </button>
     </div>
   )

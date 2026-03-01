@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import ProductCard from './ProductCard'
-import { PRODUCTS } from '../data/products'
+import { fetchProducts } from '../api/productsApi'
 
 function FilterIcon() {
   return (
@@ -39,10 +39,30 @@ function ChevronDownIcon() {
 
 const INITIAL_COUNT = 3
 
-function CuratedSelection({ products = PRODUCTS, showAllProducts = false }) {
+function CuratedSelection({ products: productsProp, showAllProducts = false }) {
+  const [products, setProducts] = useState(productsProp ?? [])
+  const [loading, setLoading] = useState(!productsProp)
+  const [error, setError] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef(null)
+
+  useEffect(() => {
+    if (productsProp != null) {
+      setProducts(productsProp)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    fetchProducts()
+      .then((data) => { if (!cancelled) setProducts(data || []) })
+      .catch((e) => { if (!cancelled) setError(e.message || 'Failed to load products') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [productsProp])
+
   const visibleProducts = showAllProducts ? products : (expanded ? products : products.slice(0, INITIAL_COUNT))
   const hasMore = !showAllProducts && products.length > INITIAL_COUNT
 
@@ -126,7 +146,11 @@ function CuratedSelection({ products = PRODUCTS, showAllProducts = false }) {
         </div>
         </div>
 
-        {/* Product grid: 2 cols mobile, 3 cols laptop — items-stretch for equal height alignment */}
+        {error && <p className="text-red-400 text-sm mb-6">{error}</p>}
+        {loading ? (
+          <p className="text-[#E5E5E5]">Loading…</p>
+        ) : (
+        <>
         <ul className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 list-none p-0 m-0 items-stretch">
           {visibleProducts.map((product) => (
             <li key={product.id ?? product.name} className="flex">
@@ -150,10 +174,11 @@ function CuratedSelection({ products = PRODUCTS, showAllProducts = false }) {
             </button>
           </div>
         )}
+        </>
+        )}
       </div>
     </section>
   )
 }
 
 export default CuratedSelection
-export { PRODUCTS }

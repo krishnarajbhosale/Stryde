@@ -5,16 +5,20 @@ const CartContext = createContext(null)
 function cartReducer(state, action) {
   switch (action.type) {
     case 'ADD': {
-      const { productId, size = 'M' } = action.payload
-      const existing = state.findIndex(
-        (i) => i.productId === productId && i.size === size
-      )
+      const { productId, size = 'M', customSizeId } = action.payload
+      const existing = state.findIndex((i) => {
+        if (i.productId !== productId) return false
+        if (customSizeId != null) return i.customSizeId === customSizeId
+        return i.size === size && i.customSizeId == null
+      })
       if (existing >= 0) {
         const next = [...state]
         next[existing].quantity += 1
         return next
       }
-      return [...state, { productId, size, quantity: 1 }]
+      const item = { productId, size: customSizeId != null ? 'Custom' : size, quantity: 1 }
+      if (customSizeId != null) item.customSizeId = customSizeId
+      return [...state, item]
     }
     case 'REMOVE':
       return state.filter((_, i) => i !== action.payload.index)
@@ -30,6 +34,8 @@ function cartReducer(state, action) {
           ? { ...item, size: action.payload.size }
           : item
       )
+    case 'CLEAR':
+      return []
     default:
       return state
   }
@@ -38,8 +44,8 @@ function cartReducer(state, action) {
 export function CartProvider({ children }) {
   const [cart, dispatch] = useReducer(cartReducer, [])
 
-  const addToCart = (productId, size = 'M') => {
-    dispatch({ type: 'ADD', payload: { productId, size } })
+  const addToCart = (productId, size = 'M', customSizeId = null) => {
+    dispatch({ type: 'ADD', payload: { productId, size, customSizeId } })
   }
 
   const removeFromCart = (index) => {
@@ -54,9 +60,13 @@ export function CartProvider({ children }) {
     dispatch({ type: 'UPDATE_SIZE', payload: { index, size } })
   }
 
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR' })
+  }
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, updateSize }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, updateSize, clearCart }}
     >
       {children}
     </CartContext.Provider>
