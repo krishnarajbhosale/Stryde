@@ -5,16 +5,22 @@
 
 const API_BASE = '/api/products'
 
+/** Amount shown less on storefront; GST line at checkout equals this per product so total stays same */
+export const DISPLAY_PRICE_DEDUCTION = 400
+
 function formatPrice(num) {
   if (num == null || Number.isNaN(num)) return '₹0'
   return '₹' + Number(num).toLocaleString('en-IN')
 }
 
-/** Normalize backend product to frontend shape: { id, name, price, image, images, brand, description, materialCare, sizes, sizeInventories } */
+/** Normalize backend product to frontend shape: { id, name, price, actualPrice, image, images, brand, description, materialCare, sizes, sizeInventories }.
+ * price = display price (actual - 400); actualPrice = number for totals and order. */
 function normalizeProduct(p) {
   if (!p) return null
   const id = p.id != null ? String(p.id) : p.id
   const basicPrice = p.basicPrice != null ? Number(p.basicPrice) : 0
+  const actualPrice = basicPrice
+  const displayPrice = Math.max(0, actualPrice - DISPLAY_PRICE_DEDUCTION)
   const imageUrls = p.imageUrls || []
   const firstImage = imageUrls[0] || ''
   const sizeInventories = (p.sizeInventories || []).map((s) => ({
@@ -25,7 +31,8 @@ function normalizeProduct(p) {
   return {
     id,
     name: p.name || '',
-    price: formatPrice(basicPrice),
+    price: formatPrice(displayPrice),
+    actualPrice,
     image: firstImage,
     images: imageUrls,
     brand: 'STRYDEEVA',

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
-import { fetchProducts, parsePrice } from '../api/productsApi'
+import { fetchProducts, DISPLAY_PRICE_DEDUCTION } from '../api/productsApi'
 import { createOrder } from '../api/ordersApi'
 
 const PLATFORM_FEE = 50
@@ -44,10 +44,13 @@ function PaymentPage() {
   const hasCustomSize = cart.some((item) => item.customSizeId != null)
   const paymentOptions = hasCustomSize ? ALL_PAYMENT_OPTIONS.filter((o) => o.id !== 'cod') : ALL_PAYMENT_OPTIONS
 
+  const totalQty = cartItemsWithProduct.reduce((s, item) => s + item.quantity, 0)
   const totalMRP = cartItemsWithProduct.reduce(
-    (sum, item) => sum + parsePrice(item.product?.price) * item.quantity,
+    (sum, item) => sum + (item.product?.actualPrice ?? 0) * item.quantity,
     0
   )
+  const subtotalDisplay = totalMRP - DISPLAY_PRICE_DEDUCTION * totalQty
+  const gstTotal = DISPLAY_PRICE_DEDUCTION * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const totalAmount = totalMRP - discount + PLATFORM_FEE
 
@@ -85,7 +88,7 @@ function PaymentPage() {
             productName: String(item.product?.name || '').trim(),
             sizeName: String(item.size || '').trim(),
             quantity: Math.max(1, Number(item.quantity)),
-            unitPrice: Number(parsePrice(item.product?.price)) || 0,
+            unitPrice: Number(item.product?.actualPrice) || 0,
           }
           if (item.customSizeId != null) obj.customSizeId = Number(item.customSizeId)
           return obj
@@ -156,8 +159,12 @@ function PaymentPage() {
       </p>
       <div className="space-y-2 text-sm text-[#E5E5E5]">
         <div className="flex justify-between">
-          <span>TOTAL MRP</span>
-          <span>₹{totalMRP.toLocaleString('en-IN')}</span>
+          <span>SUBTOTAL</span>
+          <span>₹{subtotalDisplay.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>GST</span>
+          <span>₹{gstTotal.toLocaleString('en-IN')}</span>
         </div>
         <div className="flex justify-between">
           <span>DISCOUNT ON MRP</span>

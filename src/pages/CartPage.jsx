@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
 import { useCart } from '../context/CartContext'
-import { fetchProducts, parsePrice } from '../api/productsApi'
+import { fetchProducts, DISPLAY_PRICE_DEDUCTION } from '../api/productsApi'
 
 const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 500
@@ -30,10 +30,13 @@ function CartPage() {
     product: getProductById(item.productId),
   })).filter((item) => item.product)
 
+  const totalQty = cartItemsWithProduct.reduce((s, item) => s + item.quantity, 0)
   const totalMRP = cartItemsWithProduct.reduce(
-    (sum, item) => sum + parsePrice(item.product?.price) * item.quantity,
+    (sum, item) => sum + (item.product?.actualPrice ?? 0) * item.quantity,
     0
   )
+  const subtotalDisplay = totalMRP - DISPLAY_PRICE_DEDUCTION * totalQty
+  const gstTotal = DISPLAY_PRICE_DEDUCTION * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const totalAmount = totalMRP - discount + PLATFORM_FEE
 
@@ -153,8 +156,12 @@ function CartPage() {
                   PRICE DETAILS :
                 </p>
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>TOTAL MRP</span>
-                  <span>₹{totalMRP.toLocaleString('en-IN')}</span>
+                  <span>SUBTOTAL</span>
+                  <span>₹{subtotalDisplay.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-sm text-[#D1C7B7]">
+                  <span>GST</span>
+                  <span>₹{gstTotal.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
                   <span>DISCOUNT ON MRP</span>

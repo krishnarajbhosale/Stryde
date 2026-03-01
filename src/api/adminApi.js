@@ -80,6 +80,22 @@ export async function updateProduct(id, body) {
   return res.json()
 }
 
+/** Upload images for an existing product (max 3 total). FormData with key "images" and file(s). */
+export async function uploadProductImages(productId, files) {
+  const token = localStorage.getItem('adminToken')
+  const formData = new FormData()
+  if (files && files.length) {
+    for (let i = 0; i < files.length; i++) formData.append('images', files[i])
+  }
+  const res = await fetch(`${API_BASE}/products/${productId}/images`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  })
+  if (!res.ok) throw new Error('Failed to upload images')
+  return res.json()
+}
+
 export async function deleteProduct(id) {
   const res = await fetch(`${API_BASE}/products/${id}`, {
     method: 'DELETE',

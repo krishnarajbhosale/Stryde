@@ -4,6 +4,7 @@ import {
   getProductImageBlobUrl,
   deleteProduct,
   updateProduct,
+  uploadProductImages,
 } from '../../api/adminApi'
 
 function AdminProductImage({ productId, alt }) {
@@ -28,6 +29,8 @@ export default function AdminInventory() {
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', basicPrice: '', category: '', description: '', sizeInventories: [] })
+  const [imageFiles, setImageFiles] = useState([])
+  const [uploadingImages, setUploadingImages] = useState(false)
 
   const loadProducts = async () => {
     setLoading(true)
@@ -58,6 +61,7 @@ export default function AdminInventory() {
 
   const startEdit = (p) => {
     setEditingId(p.id)
+    setImageFiles([])
     setEditForm({
       name: p.name,
       basicPrice: String(p.basicPrice),
@@ -67,8 +71,23 @@ export default function AdminInventory() {
     })
   }
 
+  const handleUploadImages = async () => {
+    if (!editingId || !imageFiles.length) return
+    setUploadingImages(true)
+    try {
+      await uploadProductImages(editingId, imageFiles)
+      setImageFiles([])
+      await loadProducts()
+    } catch (e) {
+      setError(e.message || 'Image upload failed')
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
   const cancelEdit = () => {
     setEditingId(null)
+    setImageFiles([])
   }
 
   const saveEdit = async () => {
@@ -162,6 +181,31 @@ export default function AdminInventory() {
                           />
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-xs text-[#E5E5E5]/80 mb-1">
+                        Product images (max 3). Current: {products.find((p) => p.id === editingId)?.imageUrls?.length ?? 0}/3
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
+                          className="text-sm text-[#E5E5E5] file:mr-2 file:py-1 file:px-2 file:border file:border-[#D1C7B7] file:bg-transparent file:text-[#D1C7B7] file:text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleUploadImages}
+                          disabled={uploadingImages || imageFiles.length === 0}
+                          className="py-1.5 px-3 text-sm bg-[#D1C7B7] text-[#1a1a1a] disabled:opacity-50"
+                        >
+                          {uploadingImages ? 'Uploading…' : 'Upload images'}
+                        </button>
+                        {imageFiles.length > 0 && (
+                          <span className="text-xs text-[#E5E5E5]/70">{imageFiles.length} file(s) selected</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-2 mt-2">
                       <button

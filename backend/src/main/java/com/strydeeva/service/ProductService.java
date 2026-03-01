@@ -136,6 +136,35 @@ public class ProductService {
         return productRepository.findByIdWithImagesAndSizes(id).map(p -> toDto(p, true));
     }
 
+    /** Add images to an existing product. Keeps existing images; new ones are appended up to MAX_IMAGES total. */
+    @Transactional
+    public Optional<ProductResponseDto> addProductImages(Long productId, List<MultipartFile> imageFiles) {
+        Optional<Product> opt = productRepository.findByIdWithImagesAndSizes(productId);
+        if (opt.isEmpty()) return Optional.empty();
+        Product product = opt.get();
+        List<ProductImage> existing = product.getImages() != null ? product.getImages() : new ArrayList<>();
+        int nextOrder = existing.size();
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            for (MultipartFile file : imageFiles) {
+                if (nextOrder >= MAX_IMAGES) break;
+                if (file == null || file.isEmpty()) continue;
+                try {
+                    ProductImage img = new ProductImage();
+                    img.setProduct(product);
+                    img.setImageData(file.getBytes());
+                    img.setContentType(file.getContentType());
+                    img.setSortOrder(nextOrder);
+                    product.getImages().add(img);
+                    nextOrder++;
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to save image", e);
+                }
+            }
+        }
+        productRepository.saveAndFlush(product);
+        return productRepository.findByIdWithImagesAndSizes(productId).map(p -> toDto(p, true));
+    }
+
     @Transactional
     public boolean deleteProduct(Long id) {
         if (!productRepository.existsById(id)) return false;

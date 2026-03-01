@@ -70,6 +70,16 @@ public class AdminProductController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponseDto> addImages(
+            @PathVariable Long id,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images
+    ) {
+        return productService.addProductImages(id, images != null ? images : List.of())
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         return productService.deleteProduct(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
