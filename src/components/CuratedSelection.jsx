@@ -37,7 +37,7 @@ function ChevronDownIcon() {
   )
 }
 
-const INITIAL_COUNT = 3
+const INITIAL_COUNT = 6
 
 function CuratedSelection({ products: productsProp, showAllProducts = false }) {
   const [products, setProducts] = useState(productsProp ?? [])

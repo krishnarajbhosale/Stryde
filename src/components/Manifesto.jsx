@@ -81,9 +81,9 @@ function Manifesto() {
           className={`text-[#E5E5E5] text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-cormorant font-medium leading-[1.25] md:leading-tight max-w-3xl mb-6 md:mb-8 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(1) : undefined}
         >
-          Where Two Worlds
+          Every Step is a 
           <br />
-          Converge.
+          Statement.
         </h2>
 
         <div
@@ -96,7 +96,7 @@ function Manifesto() {
           className={`text-[#E5E5E5] font-cormorant text-base md:text-base max-w-2xl leading-[1.85] md:leading-relaxed text-center my-6 md:my-4 ${visible ? slideUp : 'opacity-0 translate-y-6'}`}
           style={visible ? stagger(3) : undefined}
         >
-          STRYDEEVA exists at the intersection of two worlds — where the richness of ethnic heritage meets the precision of modern design. We believe in clothing that speaks, in garments that carry stories, in fashion that moves with purpose.
+          Strydeeva was born from a simple belief — a woman&apos;s stride is her signature. It carries her strength, softness, ambition, and identity. Inspired by &apos;stride&apos; and &apos;diva,&apos; we create for the woman who moves forward with confidence and elegance. When she owns her step, she makes a statement. When she dresses with confidence, she doesn&apos;t just walk—she strides.
         </p>
 
         <div

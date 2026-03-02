@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from 'react'
+import { createContext, useContext, useReducer, useState, useCallback } from 'react'
 
 const CartContext = createContext(null)
 
@@ -43,14 +43,19 @@ function cartReducer(state, action) {
 
 export function CartProvider({ children }) {
   const [cart, dispatch] = useReducer(cartReducer, [])
+  const [showAddedToCart, setShowAddedToCart] = useState(false)
 
-  const addToCart = (productId, size = 'M', customSizeId = null) => {
+  const addToCart = useCallback((productId, size = 'M', customSizeId = null) => {
     dispatch({ type: 'ADD', payload: { productId, size, customSizeId } })
-  }
+    setShowAddedToCart(true)
+  }, [])
 
-  const removeFromCart = (index) => {
+  const dismissAddedToCart = useCallback(() => setShowAddedToCart(false), [])
+
+  const removeFromCart = useCallback((index) => {
     dispatch({ type: 'REMOVE', payload: { index } })
-  }
+    setShowAddedToCart(false)
+  }, [])
 
   const updateQuantity = (index, quantity) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { index, quantity } })
@@ -66,7 +71,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, updateSize, clearCart }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, updateSize, clearCart, showAddedToCart, dismissAddedToCart }}
     >
       {children}
     </CartContext.Provider>

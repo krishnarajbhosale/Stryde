@@ -39,17 +39,26 @@ function AboutPage() {
                   id="about-heading"
                   className="font-cormorant font-medium text-3xl md:text-4xl lg:text-5xl text-[#E5E5E5] leading-tight mb-6 md:mb-8"
                 >
-                  Where Two Worlds Converge
+                  From the Founder&apos;s Desk
                 </h1>
                 <div className="space-y-5 text-[#E5E5E5] text-base md:text-lg leading-relaxed max-w-xl">
                   <p>
-                    STRYDEEVA was born from a simple observation: fashion has always been divided. Traditional versus contemporary. Heritage versus innovation. East versus West.
+                    Strydeeva was born from a simple belief — a woman&apos;s stride is her signature.
                   </p>
                   <p>
-                    We rejected this binary. We saw that true elegance lies not in choosing sides, but in the graceful dance between them. Our garments are conversations — between the hands of artisans who have woven stories for generations and the minds of designers who dream of tomorrow.
+                    It carries her strength, softness, ambition, and identity.
                   </p>
                   <p>
-                    Every thread carries intention. Every silhouette speaks of precision. Every piece exists as proof that duality is not division — it is depth.
+                    In a world that constantly tells women how to stand and behave, we chose to celebrate the way women shape the world instead.
+                  </p>
+                  <p>
+                    Inspired by &apos;stride&apos; and &apos;diva,&apos; Strydeeva is for the woman who moves forward with confidence and elegance — leading not because she has to, but because she was born to.
+                  </p>
+                  <p>
+                    Every design is created with intention: to empower, to elevate, and to remind every woman that when she owns her step, she makes a statement.
+                  </p>
+                  <p>
+                    Because when she dresses with confidence, she doesn&apos;t just walk—she strides.
                   </p>
                 </div>
               </div>

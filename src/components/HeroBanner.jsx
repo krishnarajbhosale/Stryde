@@ -29,10 +29,9 @@ function HeroBanner() {
         <div className="absolute inset-0 flex flex-col items-center justify-center px-3 pt-14 pb-20 sm:pt-16 sm:pb-24 lg:hidden w-full h-full">
           <div className="flex flex-col items-center justify-center w-full max-w-[92%]">
             <div className="text-center text-white font-cormorant font-medium uppercase w-full">
-              <p className="leading-[1.15] tracking-[0.02em]" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>NOT JUST</p>
-              <p className="leading-[1.15] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>CLOTHING.</p>
-              <p className="leading-[1.15] tracking-[0.02em] mt-2" style={{ fontSize: 'clamp(1.25rem, 6vh, 3rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>A</p>
-              <p className="leading-[1.15] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards' }}>MOVEMENT.</p>
+              <p className="leading-[1.15] tracking-[0.02em]" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards' }}>EVERY STEP</p>
+              <p className="leading-[1.15] tracking-[0.02em] mt-0.5" style={{ fontSize: 'clamp(1.5rem, 7.5vh, 4rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards' }}>IS A</p>
+              <p className="leading-[1.15] tracking-[0.02em] mt-2" style={{ fontSize: 'clamp(1.25rem, 6vh, 3rem)', animation: 'hero-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards' }}>STATEMENT.</p>
             </div>
             <Link
               to="/collection"
