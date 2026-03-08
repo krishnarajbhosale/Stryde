@@ -6,6 +6,7 @@ import {
   updateProduct,
   uploadProductImages,
 } from '../../api/adminApi'
+import { parseProductDetails, buildProductDetails, getDefaultProductDetails, PRODUCT_DETAIL_KEYS, FULL_WIDTH_KEYS } from '../../utils/productDetailsFormat'
 
 function AdminProductImage({ productId, alt }) {
   const [src, setSrc] = useState(null)
@@ -28,7 +29,7 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ name: '', basicPrice: '', category: '', description: '', sizeInventories: [] })
+  const [editForm, setEditForm] = useState({ name: '', basicPrice: '', category: '', productDetails: getDefaultProductDetails(), sizeInventories: [] })
   const [imageFiles, setImageFiles] = useState([])
   const [uploadingImages, setUploadingImages] = useState(false)
 
@@ -66,7 +67,7 @@ export default function AdminInventory() {
       name: p.name,
       basicPrice: String(p.basicPrice),
       category: p.category || '',
-      description: p.description || '',
+      productDetails: { ...getDefaultProductDetails(), ...parseProductDetails(p.description || '') },
       sizeInventories: (p.sizeInventories || []).map((s) => ({ sizeName: s.sizeName, quantity: s.quantity })),
     })
   }
@@ -97,10 +98,10 @@ export default function AdminInventory() {
         name: editForm.name,
         basicPrice: editForm.basicPrice,
         category: editForm.category,
-        description: editForm.description,
+        description: buildProductDetails(editForm.productDetails),
         sizeInventories: editForm.sizeInventories,
       })
-      setProducts((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...editForm, basicPrice: parseFloat(editForm.basicPrice) } : p)))
+      setProducts((prev) => prev.map((p) => (p.id === editingId ? { ...p, name: editForm.name, basicPrice: parseFloat(editForm.basicPrice), category: editForm.category, description: buildProductDetails(editForm.productDetails), sizeInventories: editForm.sizeInventories } : p)))
       setEditingId(null)
     } catch (e) {
       setError(e.message || 'Update failed')
@@ -162,11 +163,36 @@ export default function AdminInventory() {
                       onChange={(e) => updateEdit('category', e.target.value)}
                       className="w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] py-1.5 px-2 text-sm"
                     />
-                    <textarea
-                      value={editForm.description}
-                      onChange={(e) => updateEdit('description', e.target.value)}
-                      className="w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] py-1.5 px-2 text-sm min-h-[60px]"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      {PRODUCT_DETAIL_KEYS.map((key) => (
+                        <div key={key}>
+                          <label className="block text-[10px] text-[#E5E5E5]/60 uppercase">{key}</label>
+                          <input
+                            type="text"
+                            value={editForm.productDetails?.[key] ?? ''}
+                            onChange={(e) => setEditForm((prev) => ({
+                              ...prev,
+                              productDetails: { ...prev.productDetails, [key]: e.target.value },
+                            }))}
+                            className="w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] py-1 px-2 text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {FULL_WIDTH_KEYS.map((key) => (
+                      <div key={key}>
+                        <label className="block text-[10px] text-[#E5E5E5]/60 uppercase">{key}</label>
+                        <input
+                          type="text"
+                          value={editForm.productDetails?.[key] ?? ''}
+                          onChange={(e) => setEditForm((prev) => ({
+                            ...prev,
+                            productDetails: { ...prev.productDetails, [key]: e.target.value },
+                          }))}
+                          className="w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] py-1 px-2 text-sm"
+                        />
+                      </div>
+                    ))}
                     <div className="flex gap-2 flex-wrap">
                       {(editForm.sizeInventories || []).map((s, i) => (
                         <div key={i} className="flex gap-1 items-center">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createProduct } from '../../api/adminApi'
+import { getDefaultProductDetails, buildProductDetails, PRODUCT_DETAIL_KEYS, FULL_WIDTH_KEYS } from '../../utils/productDetailsFormat'
 
 const MAX_IMAGES = 3
 const inputClass =
@@ -17,7 +18,7 @@ export default function AdminProductForm() {
   const [name, setName] = useState('')
   const [basicPrice, setBasicPrice] = useState('')
   const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
+  const [productDetails, setProductDetails] = useState(getDefaultProductDetails())
   const [sizes, setSizes] = useState(defaultSizes)
   const [images, setImages] = useState([])
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -45,7 +46,7 @@ export default function AdminProductForm() {
       formData.append('name', name.trim())
       formData.append('basicPrice', basicPrice.trim())
       formData.append('category', category.trim())
-      formData.append('description', description.trim())
+      formData.append('description', buildProductDetails(productDetails))
       formData.append('sizeInventories', JSON.stringify(sizes))
       images.forEach((file) => formData.append('images', file))
       await createProduct(formData)
@@ -53,7 +54,7 @@ export default function AdminProductForm() {
       setName('')
       setBasicPrice('')
       setCategory('')
-      setDescription('')
+      setProductDetails(getDefaultProductDetails())
       setSizes(defaultSizes.map((s) => ({ ...s })))
       setImages([])
     } catch (err) {
@@ -100,13 +101,33 @@ export default function AdminProductForm() {
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-wide text-[#E5E5E5]/80 mb-1">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={`${inputClass} min-h-[100px] resize-y`}
-            rows={4}
-          />
+          <label className="block text-xs uppercase tracking-wide text-[#E5E5E5]/80 mb-2">Product details (small headings on storefront)</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PRODUCT_DETAIL_KEYS.map((key) => (
+              <div key={key}>
+                <label className="block text-[10px] uppercase tracking-wide text-[#E5E5E5]/60 mb-0.5">{key}</label>
+                <input
+                  type="text"
+                  value={productDetails[key] ?? ''}
+                  onChange={(e) => setProductDetails((prev) => ({ ...prev, [key]: e.target.value }))}
+                  className={inputClass}
+                  placeholder={key}
+                />
+              </div>
+            ))}
+          </div>
+          {FULL_WIDTH_KEYS.map((key) => (
+            <div key={key} className="mt-3">
+              <label className="block text-[10px] uppercase tracking-wide text-[#E5E5E5]/60 mb-0.5">{key}</label>
+              <input
+                type="text"
+                value={productDetails[key] ?? ''}
+                onChange={(e) => setProductDetails((prev) => ({ ...prev, [key]: e.target.value }))}
+                className={inputClass}
+                placeholder={key === 'Care instructions' ? 'e.g. Machine Wash Cold. Line Dry.' : 'e.g. 1 Dress'}
+              />
+            </div>
+          ))}
         </div>
         <div>
           <label className="block text-xs uppercase tracking-wide text-[#E5E5E5]/80 mb-1">

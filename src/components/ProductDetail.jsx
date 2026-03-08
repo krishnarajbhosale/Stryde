@@ -4,6 +4,7 @@ import { fetchProductById, fetchProducts } from '../api/productsApi'
 import { createCustomSize } from '../api/customSizesApi'
 import ProductCard from './ProductCard'
 import { useCart } from '../context/CartContext'
+import { parseProductDetails, PRODUCT_DETAIL_KEYS, FULL_WIDTH_KEYS } from '../utils/productDetailsFormat'
 
 function getSimilarFromList(currentId, allProducts, limit = 3) {
   const idStr = String(currentId)
@@ -159,18 +160,14 @@ function ProductDetail() {
             </div>
             <div className="flex flex-wrap gap-2 mb-6">
               {(() => {
-                const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL']
                 const inventories = product.sizeInventories?.length ? product.sizeInventories : (product.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 }))
-                const sorted = [...inventories].sort((a, b) => {
-                  const ai = SIZE_ORDER.indexOf(a.sizeName)
-                  const bi = SIZE_ORDER.indexOf(b.sizeName)
-                  if (ai === -1 && bi === -1) return (a.sizeName || '').localeCompare(b.sizeName || '')
-                  if (ai === -1) return 1
-                  if (bi === -1) return -1
-                  return ai - bi
-                })
-                const withCustom = [...sorted, { isCustomize: true }]
-                return withCustom.map((item) => {
+                const withCustom = []
+                for (const inv of inventories) {
+                  if (inv.sizeName === 'XL') withCustom.push({ isCustomize: true })
+                  withCustom.push(inv)
+                }
+                if (!inventories.some((i) => i.sizeName === 'XL')) withCustom.push({ isCustomize: true })
+                return withCustom.map((item, idx) => {
                   if (item.isCustomize) {
                     return (
                       <button
@@ -256,18 +253,43 @@ function ProductDetail() {
                 {
                   id: 'description',
                   title: 'DESCRIPTION',
-                  content: (
-                    <div className="space-y-4 text-sm text-[#D1C7B7]/95 leading-relaxed">
-                      <div>
-                        <p className="font-semibold uppercase tracking-wide text-[#D1C7B7] mb-1">Product Details</p>
-                        <p>{product.description || 'No description available.'}</p>
+                  content: (() => {
+                    const details = parseProductDetails(product.description)
+                    const hasStructured = Object.keys(details).length > 0
+                    const twoColumnKeys = PRODUCT_DETAIL_KEYS.filter((k) => details[k])
+                    const fullWidthKeys = FULL_WIDTH_KEYS.filter((k) => details[k])
+                    return (
+                      <div className="space-y-4 text-sm text-[#D1C7B7]/95 leading-relaxed">
+                        <p className="font-semibold uppercase tracking-wide text-[#D1C7B7] mb-3">Product details</p>
+                        {hasStructured ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                              {twoColumnKeys.map((key) => (
+                                <div key={key}>
+                                  <p className="text-xs uppercase tracking-wide text-[#D1C7B7]/70 mb-0.5">{key}</p>
+                                  <p className="font-medium text-[#D1C7B7]">{details[key]}</p>
+                                </div>
+                              ))}
+                            </div>
+                            {fullWidthKeys.map((key) => (
+                              <div key={key} className="pt-2">
+                                <p className="text-xs uppercase tracking-wide text-[#D1C7B7]/70 mb-0.5">{key}</p>
+                                <p className="font-medium text-[#D1C7B7]">{details[key]}</p>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <p>{product.description || 'No description available.'}</p>
+                        )}
+                        {product.materialCare && (
+                          <div className="pt-2 border-t border-[#D1C7B7]/20">
+                            <p className="text-xs uppercase tracking-wide text-[#D1C7B7]/70 mb-0.5">Material & Care</p>
+                            <p className="font-medium text-[#D1C7B7]">{product.materialCare}</p>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <p className="font-semibold uppercase tracking-wide text-[#D1C7B7] mb-1">Material & Care</p>
-                        <p>{product.materialCare || 'No material & care information available.'}</p>
-                      </div>
-                    </div>
-                  ),
+                    )
+                  })(),
                 },
                 {
                   id: 'shipping',
@@ -499,27 +521,19 @@ function ProductDetail() {
           </div>
         )}
 
-        {/* Similar Products - horizontal scroll: 2 visible on mobile, 3 on desktop */}
+        {/* Similar Products */}
         {similarProducts.length > 0 && (
-          <section className="mt-10 pt-8 md:mt-16 md:pt-12 border-t border-[#333]" aria-labelledby="similar-products-heading">
-            <h2 id="similar-products-heading" className="font-cormorant font-medium text-xl sm:text-2xl md:text-3xl uppercase text-[#D1C7B7] mb-5 md:mb-8">
+          <section className="mt-16 pt-12 border-t border-[#333]">
+            <h2 className="font-cormorant font-medium text-2xl md:text-3xl uppercase text-[#D1C7B7] mb-8">
               SIMILAR PRODUCTS
             </h2>
-            <div
-              className="overflow-x-auto overflow-y-hidden -mx-4 pl-4 pr-6 md:-mx-6 md:pl-6 md:pr-8 touch-pan-x overscroll-x-contain"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              <ul className="flex flex-nowrap gap-3 sm:gap-4 md:gap-6 list-none p-0 m-0 min-h-0 snap-x snap-mandatory pr-6 md:pr-10">
-                {similarProducts.map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex-shrink-0 w-[calc(50%-6px)] min-w-[140px] sm:w-[calc(50%-8px)] sm:min-w-0 md:w-[calc(33.333%-16px)] snap-center"
-                  >
-                    <ProductCard product={p} />
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 list-none p-0 m-0">
+              {similarProducts.map((p) => (
+                <li key={p.id}>
+                  <ProductCard product={p} />
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>
