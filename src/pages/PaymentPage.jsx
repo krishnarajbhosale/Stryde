@@ -6,8 +6,8 @@ import { useCart } from '../context/CartContext'
 import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 import { createOrder } from '../api/ordersApi'
 
-const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 0
+const GST_RATE = 0.12
 
 const ALL_PAYMENT_OPTIONS = [
   { id: 'cod', label: 'CASH ON DELIVERY' },
@@ -51,7 +51,9 @@ function PaymentPage() {
   )
   const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
-  const totalAmount = totalMRP - discount + PLATFORM_FEE
+  const subtotal = totalMRP - discount
+  const gstAmount = Math.round(subtotal * GST_RATE)
+  const totalAmount = subtotal + gstAmount
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -175,8 +177,8 @@ function PaymentPage() {
           </div>
         )}
         <div className="flex justify-between">
-          <span>PLATFORM FEE</span>
-          <span>₹{PLATFORM_FEE}</span>
+          <span>GST (12%)</span>
+          <span>₹{gstAmount.toLocaleString('en-IN')}</span>
         </div>
       </div>
       <div className="h-px bg-[#E5E5E5]/20 my-4" />

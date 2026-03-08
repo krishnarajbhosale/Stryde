@@ -5,8 +5,8 @@ import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
 import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 
-const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 0
+const GST_RATE = 0.12
 
 const inputUnderline =
   'w-full bg-transparent border-0 border-b border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide'
@@ -48,7 +48,9 @@ function CheckoutPage() {
   )
   const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
-  const totalAmount = totalMRP - discount + PLATFORM_FEE
+  const subtotal = totalMRP - discount
+  const gstAmount = Math.round(subtotal * GST_RATE)
+  const totalAmount = subtotal + gstAmount
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -140,8 +142,8 @@ function CheckoutPage() {
           </div>
         )}
         <div className="flex justify-between">
-          <span>PLATFORM FEE</span>
-          <span>₹{PLATFORM_FEE}</span>
+          <span>GST (12%)</span>
+          <span>₹{gstAmount.toLocaleString('en-IN')}</span>
         </div>
       </div>
       <div className="h-px bg-[#E5E5E5]/20 my-4" />

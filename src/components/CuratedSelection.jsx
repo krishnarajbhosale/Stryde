@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ProductCard from './ProductCard'
 import { fetchProducts } from '../api/productsApi'
+import { useSearch } from '../context/SearchContext'
 
 function FilterIcon() {
   return (
@@ -39,13 +40,26 @@ function ChevronDownIcon() {
 
 const INITIAL_COUNT = 6
 
+/** Unique categories from products, sorted (e.g. Jumpsuits, Blazers, Blazers Shorts, Shorts Sets, Sets). */
+function getCategoriesFromProducts(products) {
+  const set = new Set()
+  for (const p of products) {
+    const cat = (p.category || '').trim()
+    if (cat) set.add(cat)
+  }
+  return [...set].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+}
+
 function CuratedSelection({ products: productsProp, showAllProducts = false }) {
   const [products, setProducts] = useState(productsProp ?? [])
   const [loading, setLoading] = useState(!productsProp)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const filterRef = useRef(null)
+  const { searchQuery } = useSearch()
+  const searchTerm = (searchQuery || '').trim().toLowerCase()
 
   useEffect(() => {
     if (productsProp != null) {
@@ -63,8 +77,17 @@ function CuratedSelection({ products: productsProp, showAllProducts = false }) {
     return () => { cancelled = true }
   }, [productsProp])
 
-  const visibleProducts = showAllProducts ? products : (expanded ? products : products.slice(0, INITIAL_COUNT))
-  const hasMore = !showAllProducts && products.length > INITIAL_COUNT
+  const bySearch = searchTerm
+    ? products.filter((p) => (p.name || '').toLowerCase().includes(searchTerm))
+    : products
+  const filteredProducts = selectedCategory
+    ? bySearch.filter((p) => (p.category || '').trim() === selectedCategory)
+    : bySearch
+  const categories = getCategoriesFromProducts(products)
+  const visibleProducts = showAllProducts
+    ? filteredProducts
+    : (expanded ? filteredProducts : filteredProducts.slice(0, INITIAL_COUNT))
+  const hasMore = !showAllProducts && filteredProducts.length > INITIAL_COUNT
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -105,42 +128,37 @@ function CuratedSelection({ products: productsProp, showAllProducts = false }) {
             type="button"
             onClick={() => setFilterOpen((o) => !o)}
             className="flex items-center gap-2 text-[#E5E5E5] text-sm font-normal tracking-wide hover:opacity-80 transition-opacity"
-            aria-label="Filter products"
+            aria-label={selectedCategory ? `Filter: ${selectedCategory}` : 'Filter products'}
             aria-expanded={filterOpen}
             aria-haspopup="true"
           >
             <FilterIcon />
-            Filter
+            {selectedCategory ? `Filter: ${selectedCategory}` : 'Filter'}
           </button>
           {filterOpen && (
             <div
-              className="absolute left-0 top-full mt-2 min-w-[160px] py-2 bg-black border border-[#D1C7B7]/40 rounded shadow-lg z-50"
+              className="absolute left-0 top-full mt-2 min-w-[180px] max-h-[70vh] overflow-auto py-2 bg-black border border-[#D1C7B7]/40 rounded shadow-lg z-50"
               role="menu"
             >
               <button
                 type="button"
                 role="menuitem"
-                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
-                onClick={() => setFilterOpen(false)}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7] ${selectedCategory == null ? 'text-[#D1C7B7] font-medium' : 'text-[#E5E5E5]'}`}
+                onClick={() => { setSelectedCategory(null); setFilterOpen(false) }}
               >
                 All
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
-                onClick={() => setFilterOpen(false)}
-              >
-                New
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="w-full text-left px-4 py-2 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7]"
-                onClick={() => setFilterOpen(false)}
-              >
-                Featured
-              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  role="menuitem"
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7] ${selectedCategory === cat ? 'text-[#D1C7B7] font-medium' : 'text-[#E5E5E5]'}`}
+                  onClick={() => { setSelectedCategory(cat); setFilterOpen(false) }}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -149,6 +167,10 @@ function CuratedSelection({ products: productsProp, showAllProducts = false }) {
         {error && <p className="text-red-400 text-sm mb-6">{error}</p>}
         {loading ? (
           <p className="text-[#E5E5E5]">Loading…</p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="text-[#E5E5E5]/80 text-sm">
+            {searchTerm || selectedCategory ? 'No products match your search or filter.' : 'No products available.'}
+          </p>
         ) : (
         <>
         <ul className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 list-none p-0 m-0 items-stretch">
@@ -166,7 +188,7 @@ function CuratedSelection({ products: productsProp, showAllProducts = false }) {
               type="button"
               onClick={() => setExpanded(true)}
               className="text-[#E5E5E5] opacity-80 hover:opacity-100 transition-opacity p-2 rounded focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50"
-              aria-label={expanded ? 'Show less' : `Show ${products.length - INITIAL_COUNT} more products`}
+              aria-label={expanded ? 'Show less' : `Show ${filteredProducts.length - INITIAL_COUNT} more products`}
             >
               <span className={expanded ? 'inline-block rotate-180' : ''}>
                 <ChevronDownIcon />

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
+import { SearchProvider } from './context/SearchContext'
 import ScrollToTop from './components/ScrollToTop'
 import AddedToCartPopup from './components/AddedToCartPopup'
 import HomePage from './pages/HomePage'
@@ -20,6 +21,7 @@ import './App.css'
 function App() {
   return (
     <CartProvider>
+      <SearchProvider>
       <AddedToCartPopup />
       <div className="min-h-screen">
         <ScrollToTop />
@@ -39,6 +41,7 @@ function App() {
           <Route path="/adminlogin/101/*" element={<AdminLoginPage />} />
         </Routes>
       </div>
+      </SearchProvider>
     </CartProvider>
   )
 }

@@ -6,8 +6,8 @@ import ProductCard from '../components/ProductCard'
 import { useCart } from '../context/CartContext'
 import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 
-const PLATFORM_FEE = 50
 const DISCOUNT_PER_ORDER = 0
+const GST_RATE = 0.12
 
 function CartPage() {
   const navigate = useNavigate()
@@ -37,7 +37,9 @@ function CartPage() {
   )
   const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
-  const totalAmount = totalMRP - discount + PLATFORM_FEE
+  const subtotal = totalMRP - discount
+  const gstAmount = Math.round(subtotal * GST_RATE)
+  const totalAmount = subtotal + gstAmount
 
   const similarProducts = (loading || cartItemsWithProduct.length === 0)
     ? products.slice(0, 3)
@@ -172,8 +174,8 @@ function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>PLATFORM FEE</span>
-                  <span>₹{PLATFORM_FEE}</span>
+                  <span>GST (12%)</span>
+                  <span>₹{gstAmount.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="h-px bg-[#D1C7B7]/30 my-4" />
                 <div className="flex justify-between text-base font-medium text-[#D1C7B7]">

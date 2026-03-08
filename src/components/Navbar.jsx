@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import StrydeevaLogo from '../assets/whitelogo.png'
 import { useCart } from '../context/CartContext'
+import { useSearch } from '../context/SearchContext'
+import { fetchProducts } from '../api/productsApi'
 
 const SCROLL_THRESHOLD = 50
+const MAX_SEARCH_SUGGESTIONS = 8
 
 function HamburgerIcon() {
   return (
@@ -14,10 +17,21 @@ function HamburgerIcon() {
 }
 
 function Navbar() {
+  const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [products, setProducts] = useState([])
+  const searchInputRef = useRef(null)
+  const searchBarRef = useRef(null)
   const { cart } = useCart()
+  const { searchQuery, setSearchQuery } = useSearch()
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0)
+
+  const searchTerm = (searchQuery || '').trim().toLowerCase()
+  const matchingProducts = searchTerm
+    ? products.filter((p) => (p.name || '').toLowerCase().includes(searchTerm)).slice(0, MAX_SEARCH_SUGGESTIONS)
+    : []
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD)
@@ -40,7 +54,36 @@ function Navbar() {
     }
   }, [menuOpen])
 
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) searchInputRef.current.focus()
+  }, [searchOpen])
+
+  useEffect(() => {
+    if (!searchOpen) return
+    let cancelled = false
+    fetchProducts()
+      .then((data) => { if (!cancelled) setProducts(data || []) })
+      .catch(() => { if (!cancelled) setProducts([]) })
+    return () => { cancelled = true }
+  }, [searchOpen])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchBarRef.current && !searchBarRef.current.contains(e.target)) setSearchOpen(false)
+    }
+    if (searchOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [searchOpen])
+
   const closeMenu = () => setMenuOpen(false)
+
+  const handleSelectProduct = (product) => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    navigate(`/product/${product.id}`)
+  }
 
   return (
     <>
@@ -88,41 +131,84 @@ function Navbar() {
           </Link>
         </div>
 
-        {/* Right: Icon buttons (mobile: search + cart only; desktop: all) */}
-        <div className="flex items-center gap-1 min-w-0 md:min-w-[140px] justify-end">
-        <button
-          type="button"
-          className="p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"
-          aria-label="Search"
-        >
-          <svg
-            viewBox="1274 34 20 20"
-            fill="none"
-            className="w-6 h-6"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinecap="round"
-          >
-            <path d="M1287.94 47.4585L1292 51.5M1283 38.5C1285.21 38.5 1287 40.2909 1287 42.5M1290 42.5C1290 38.634 1286.87 35.5 1283 35.5C1279.13 35.5 1276 38.634 1276 42.5C1276 46.366 1279.13 49.5 1283 49.5C1286.87 49.5 1290 46.366 1290 42.5Z" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="hidden md:block p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"
-          aria-label="Account"
-        >
-          <svg
-            viewBox="1318 32 36 26"
-            fill="none"
-            className="w-6 h-6"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinecap="round"
-          >
-            <path d="M1336 45.5C1332.54 45.5 1329.63 47.84 1328.76 51.0229C1328.47 52.0886 1329.4 53 1330.5 53H1341.5C1342.6 53 1343.53 52.0886 1343.24 51.0229C1342.37 47.84 1339.46 45.5 1336 45.5Z" />
-            <path d="M1339.5 39C1339.5 40.933 1337.93 42.5 1336 42.5C1334.07 42.5 1332.5 40.933 1332.5 39C1332.5 37.067 1334.07 35.5 1336 35.5C1337.93 35.5 1339.5 37.067 1339.5 39Z" />
-          </svg>
-        </button>
+        {/* Right: Search bar + Cart */}
+        <div className="flex items-center gap-1 min-w-0 md:min-w-[140px] justify-end" ref={searchBarRef}>
+          {searchOpen ? (
+            <div className="relative flex-1 max-w-[200px] md:max-w-[280px]">
+              <div className="flex items-center bg-[#1a1a1a] border border-[#D1C7B7]/40 rounded-md overflow-hidden">
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full bg-transparent text-[#E5E5E5] text-sm py-2 px-3 placeholder:text-[#808080] focus:outline-none"
+                  aria-label="Search products by name"
+                  aria-autocomplete="list"
+                  aria-controls="search-suggestions"
+                  aria-expanded={matchingProducts.length > 0}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="p-2 text-[#E5E5E5] hover:bg-white/10"
+                  aria-label="Close search"
+                >
+                  <span className="text-lg leading-none">×</span>
+                </button>
+              </div>
+              {searchTerm && (
+                <ul
+                  id="search-suggestions"
+                  className="absolute left-0 right-0 top-full mt-1 max-h-[70vh] overflow-auto bg-[#1a1a1a] border border-[#D1C7B7]/40 rounded-md shadow-lg z-[60] py-1"
+                  role="listbox"
+                >
+                  {matchingProducts.length === 0 ? (
+                    <li className="px-3 py-2.5 text-sm text-[#E5E5E5]/70" role="option">
+                      No products found
+                    </li>
+                  ) : (
+                    matchingProducts.map((product) => (
+                      <li key={product.id} role="option">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectProduct(product)}
+                          className="w-full text-left px-3 py-2.5 text-sm text-[#E5E5E5] hover:bg-[#D1C7B7]/10 hover:text-[#D1C7B7] flex items-center gap-3"
+                        >
+                          {product.image && (
+                            <img
+                              src={product.image}
+                              alt=""
+                              className="w-10 h-12 object-cover rounded flex-shrink-0 bg-neutral-800"
+                            />
+                          )}
+                          <span className="truncate">{product.name}</span>
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"
+              aria-label="Search"
+            >
+              <svg
+                viewBox="1274 34 20 20"
+                fill="none"
+                className="w-6 h-6"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              >
+                <path d="M1287.94 47.4585L1292 51.5M1283 38.5C1285.21 38.5 1287 40.2909 1287 42.5M1290 42.5C1290 38.634 1286.87 35.5 1283 35.5C1279.13 35.5 1276 38.634 1276 42.5C1276 46.366 1279.13 49.5 1283 49.5C1286.87 49.5 1290 46.366 1290 42.5Z" />
+              </svg>
+            </button>
+          )}
         <Link
           to="/cart"
           className="relative p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import aboutBg from '../assets/AboutBackground.png'
-import aboutFibre from '../assets/AboutFibreImage.png'
+import aboutFibre from '../assets/AboutFibre.jpg'
 
 function AboutPage() {
   const [email, setEmail] = useState('')
