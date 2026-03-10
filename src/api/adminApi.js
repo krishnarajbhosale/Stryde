@@ -80,7 +80,7 @@ export async function updateProduct(id, body) {
   return res.json()
 }
 
-/** Upload images for an existing product (max 3 total). FormData with key "images" and file(s). */
+/** Upload images for an existing product (max 6 total). FormData with key "images" and file(s). */
 export async function uploadProductImages(productId, files) {
   const token = localStorage.getItem('adminToken')
   const formData = new FormData()
@@ -124,4 +124,12 @@ export async function downloadOrdersExcel() {
   a.download = 'confirmed_orders.xlsx'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export async function getCustomSizeById(id) {
+  const res = await fetch(`${API_BASE}/custom-sizes/${id}`, {
+    headers: getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch custom size')
+  return res.json()
 }

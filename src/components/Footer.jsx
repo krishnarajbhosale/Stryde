@@ -31,7 +31,7 @@ function Footer() {
               SHOP
             </h3>
             <ul className="list-none p-0 m-0 space-y-2">
-              {['New Collection', 'Limited Collection', 'All Products'].map((label) => (
+              {['New Collection'].map((label) => (
                 <li key={label}>
                   <a
                     href={`/${label.toLowerCase().replace(/\s+/g, '-')}`}

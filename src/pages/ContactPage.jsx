@@ -107,7 +107,8 @@ function ContactPage() {
                 <p className="text-xs font-medium uppercase tracking-wide text-[#D1C7B7] mb-2">
                   Email
                 </p>
-                <p>care@strydeeva.com</p>
+                <p>Contact@strydeeva.com</p>
+                <p>support@strydeeva.com</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-[#D1C7B7] mb-2">

@@ -186,6 +186,7 @@ function CheckoutPage() {
                   placeholder="Email Or Mobile Number"
                   className={inputUnderline}
                   aria-label="Email or mobile number"
+                  required
                 />
                 <label className="flex items-center gap-3 mt-4 cursor-pointer">
                   <input
@@ -212,6 +213,7 @@ function CheckoutPage() {
                     placeholder="First Name"
                     className={inputUnderline}
                     aria-label="First name"
+                    required
                   />
                   <input
                     type="text"
@@ -221,6 +223,7 @@ function CheckoutPage() {
                     placeholder="Last Name"
                     className={inputUnderline}
                     aria-label="Last name"
+                    required
                   />
                 </div>
                 <input
@@ -231,6 +234,7 @@ function CheckoutPage() {
                   placeholder="Address"
                   className={`${inputUnderline} mb-4`}
                   aria-label="Address"
+                  required
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
@@ -241,6 +245,7 @@ function CheckoutPage() {
                     placeholder="City"
                     className={inputUnderline}
                     aria-label="City"
+                    required
                   />
                   <input
                     type="text"
@@ -250,6 +255,7 @@ function CheckoutPage() {
                     placeholder="Pin Code"
                     className={inputUnderline}
                     aria-label="Pin code"
+                    required
                   />
                 </div>
               </section>
@@ -282,6 +288,7 @@ function CheckoutPage() {
                   placeholder="Email ID / Mobile Number"
                   className={inputUnderline}
                   aria-label="Email or mobile number"
+                  required
                 />
                 <label className="flex items-center gap-3 mt-4 cursor-pointer">
                   <input
@@ -308,6 +315,7 @@ function CheckoutPage() {
                     placeholder="First Name"
                     className={inputUnderline}
                     aria-label="First name"
+                    required
                   />
                   <input
                     type="text"
@@ -317,6 +325,7 @@ function CheckoutPage() {
                     placeholder="Last Name"
                     className={inputUnderline}
                     aria-label="Last name"
+                    required
                   />
                 </div>
                 <input
@@ -327,6 +336,7 @@ function CheckoutPage() {
                   placeholder="Address"
                   className={`${inputUnderline} mb-4`}
                   aria-label="Address"
+                  required
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -337,6 +347,7 @@ function CheckoutPage() {
                     placeholder="City"
                     className={inputUnderline}
                     aria-label="City"
+                    required
                   />
                   <input
                     type="text"
@@ -346,6 +357,7 @@ function CheckoutPage() {
                     placeholder="Pin Code"
                     className={inputUnderline}
                     aria-label="Pin code"
+                    required
                   />
                 </div>
               </section>

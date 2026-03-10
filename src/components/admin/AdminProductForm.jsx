@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createProduct } from '../../api/adminApi'
 import { getDefaultProductDetails, buildProductDetails, PRODUCT_DETAIL_KEYS, FULL_WIDTH_KEYS } from '../../utils/productDetailsFormat'
 
-const MAX_IMAGES = 3
+const MAX_IMAGES = 6
 const inputClass =
   'w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 px-3 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm'
 

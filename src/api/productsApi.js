@@ -38,7 +38,6 @@ function normalizeProduct(p) {
     brand: 'STRYDEEVA',
     description: p.description || '',
     category: (p.category || '').trim(),
-    materialCare: p.category || '',
     sizes,
     sizeInventories: sizeInventories.length ? sizeInventories : sizes.map((sizeName) => ({ sizeName, quantity: 1 })),
   }

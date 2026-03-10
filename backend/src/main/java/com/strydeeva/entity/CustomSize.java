@@ -36,6 +36,9 @@ public class CustomSize {
     @Column(name = "height", length = 20)
     private String height;
 
+    @Column(name = "remark", length = 255)
+    private String remark;
+
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
 
@@ -59,6 +62,8 @@ public class CustomSize {
     public void setSleeveRoundBicep(String sleeveRoundBicep) { this.sleeveRoundBicep = sleeveRoundBicep; }
     public String getHeight() { return height; }
     public void setHeight(String height) { this.height = height; }
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

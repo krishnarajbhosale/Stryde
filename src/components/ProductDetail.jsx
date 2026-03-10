@@ -24,7 +24,7 @@ function ProductDetail() {
   const [sizeChartOpen, setSizeChartOpen] = useState(false)
   const [customSizeModalOpen, setCustomSizeModalOpen] = useState(false)
   const [customSizeForm, setCustomSizeForm] = useState({
-    bust: '', waist: '', hip: '', shoulder: '', armhole: '', sleeveLength: '', sleeveRoundBicep: '', height: '',
+    bust: '', waist: '', hip: '', shoulder: '', armhole: '', sleeveLength: '', sleeveRoundBicep: '', height: '', remark: '',
   })
   const [customSizeSubmitting, setCustomSizeSubmitting] = useState(false)
   const [customSizeError, setCustomSizeError] = useState('')
@@ -57,7 +57,25 @@ function ProductDetail() {
   const cartIndex = product ? cart.findIndex((item) => String(item.productId) === String(product.id) && item.size === selectedSize) : -1
   const inCart = cartIndex >= 0
 
-  const inventories = product?.sizeInventories?.length ? product.sizeInventories : (product?.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 }))
+  const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+  const sortInventories = (list) => {
+    if (!list || !list.length) return []
+    const orderMap = new Map(sizeOrder.map((s, i) => [s.toUpperCase(), i]))
+    return [...list].sort((a, b) => {
+      const aName = String(a.sizeName || '').toUpperCase()
+      const bName = String(b.sizeName || '').toUpperCase()
+      const aOrder = orderMap.has(aName) ? orderMap.get(aName) : sizeOrder.length
+      const bOrder = orderMap.has(bName) ? orderMap.get(bName) : sizeOrder.length
+      if (aOrder !== bOrder) return aOrder - bOrder
+      return aName.localeCompare(bName)
+    })
+  }
+
+  const inventories = sortInventories(
+    product?.sizeInventories?.length
+      ? product.sizeInventories
+      : (product?.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 })),
+  )
   const selectedInv = inventories.find((s) => s.sizeName === selectedSize)
   const selectedSoldOut = selectedInv && (selectedInv.quantity ?? 0) === 0
 
@@ -99,31 +117,59 @@ function ProductDetail() {
     <div className="w-full bg-black text-[#D1C7B7] min-h-screen">
       <div className="max-w-[1430px] mx-auto px-4 md:px-6 py-10 md:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start">
-          {/* Left: Gallery — fixed height, does not grow when right accordion expands */}
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_160px] lg:gap-4 lg:items-stretch lg:sticky lg:top-24">
-            {/* Main image: fixed aspect on desktop so height doesn't change */}
-            <div className="relative w-full aspect-[4/5] lg:aspect-[4/5] lg:max-h-[min(80vh,700px)] overflow-hidden bg-neutral-800">
+          {/* Left: Gallery with slideshow and horizontal scroller */}
+          <div className="flex flex-col gap-4 lg:sticky lg:top-24">
+            {/* Main image with next/prev controls */}
+            <div className="relative w-full aspect-[4/5] lg:aspect-[4/5] lg:max-h-[min(80vh,700px)] overflow-hidden bg-neutral-800 rounded-sm">
               <img
                 src={images[mainImage]}
                 alt={product.name}
                 className="w-full h-full object-cover object-center"
               />
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setMainImage((prev) => (prev - 1 + images.length) % images.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-[#D1C7B7] w-8 h-8 rounded-full flex items-center justify-center text-lg"
+                    aria-label="Previous image"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMainImage((prev) => (prev + 1) % images.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-[#D1C7B7] w-8 h-8 rounded-full flex items-center justify-center text-lg"
+                    aria-label="Next image"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
-            {/* Thumbnails: mobile = horizontal row; laptop = vertical stack on right, each ~half main height */}
-            <div className="flex flex-row gap-2 lg:flex-col lg:gap-3">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setMainImage(i)}
-                  className={`w-20 h-24 flex-shrink-0 lg:w-full lg:flex-1 lg:min-h-0 overflow-hidden rounded border-2 ${
-                    mainImage === i ? 'border-[#D1C7B7]' : 'border-[#333]'
-                  }`}
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {/* Thumbnails: smooth horizontal scroll on all viewports */}
+            {images.length > 1 && (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-2 overflow-x-auto py-1">
+                  {images.map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setMainImage(i)}
+                      className={`w-16 h-20 sm:w-20 sm:h-24 flex-shrink-0 overflow-hidden rounded border-2 transition-transform duration-150 ${
+                        mainImage === i ? 'border-[#D1C7B7]' : 'border-[#333]'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-200"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Info */}
@@ -160,13 +206,21 @@ function ProductDetail() {
             </div>
             <div className="flex flex-wrap gap-2 mb-6">
               {(() => {
-                const inventories = product.sizeInventories?.length ? product.sizeInventories : (product.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 }))
+                const inventories = sortInventories(
+                  product.sizeInventories?.length
+                    ? product.sizeInventories
+                    : (product.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 })),
+                )
                 const withCustom = []
+                let inserted = false
                 for (const inv of inventories) {
-                  if (inv.sizeName === 'XL') withCustom.push({ isCustomize: true })
                   withCustom.push(inv)
+                  if (!inserted && String(inv.sizeName || '').toUpperCase() === 'XL') {
+                    withCustom.push({ isCustomize: true })
+                    inserted = true
+                  }
                 }
-                if (!inventories.some((i) => i.sizeName === 'XL')) withCustom.push({ isCustomize: true })
+                if (!inserted) withCustom.push({ isCustomize: true })
                 return withCustom.map((item, idx) => {
                   if (item.isCustomize) {
                     return (
@@ -209,41 +263,34 @@ function ProductDetail() {
             <div className="w-24 h-px bg-[#D1C7B7] mb-6" />
 
             {(() => {
-              const inventories = product.sizeInventories?.length ? product.sizeInventories : (product.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 }))
+              const inventories = sortInventories(
+                product.sizeInventories?.length
+                  ? product.sizeInventories
+                  : (product.sizes || []).map((sizeName) => ({ sizeName, quantity: 1 })),
+              )
               const selectedInv = inventories.find((s) => s.sizeName === selectedSize)
               const selectedSoldOut = selectedInv && (selectedInv.quantity ?? 0) === 0
               return (
-            <div className="flex flex-col gap-3 mb-6">
-              {selectedSoldOut ? (
-                <p className="py-3 px-4 text-sm font-medium uppercase border border-[#666] text-[#666] bg-[#222]">
-                  This size is sold out
-                </p>
-              ) : (
-              <button
-                type="button"
-                onClick={() => inCart ? removeFromCart(cartIndex) : addToCart(product.id, selectedSize)}
-                aria-label={inCart ? 'Remove from cart (undo)' : 'Add to cart'}
-                className={`w-full max-w-md py-3 px-4 text-sm font-medium tracking-wide uppercase border border-[#D1C7B7] transition-all duration-300 ease-out active:scale-[0.98] select-none ${
-                  inCart
-                    ? 'bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90'
-                    : 'text-[#D1C7B7] bg-transparent hover:bg-[#D1C7B7]/10'
-                }`}
-              >
-                {inCart ? 'ADDED TO CART' : 'ADD TO CART'}
-              </button>
-              )}
-              <button
-                type="button"
-                disabled={selectedSoldOut}
-                className={`w-full max-w-md py-3 px-4 text-sm font-medium tracking-wide uppercase transition-colors ${
-                  selectedSoldOut
-                    ? 'bg-[#444] text-[#666] cursor-not-allowed border border-[#444]'
-                    : 'bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90'
-                }`}
-              >
-                {selectedSoldOut ? 'SOLD OUT' : 'BUY NOW'}
-              </button>
-            </div>
+                <div className="flex flex-col gap-3 mb-6">
+                  {selectedSoldOut ? (
+                    <p className="py-3 px-4 text-sm font-medium uppercase border border-[#666] text-[#666] bg-[#222]">
+                      This size is sold out
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => (inCart ? removeFromCart(cartIndex) : addToCart(product.id, selectedSize))}
+                      aria-label={inCart ? 'Remove from cart (undo)' : 'Add to cart'}
+                      className={`w-full max-w-md py-3 px-4 text-sm font-medium tracking-wide uppercase border border-[#D1C7B7] transition-all duration-300 ease-out active:scale-[0.98] select-none ${
+                        inCart
+                          ? 'bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90'
+                          : 'text-[#D1C7B7] bg-transparent hover:bg-[#D1C7B7]/10'
+                      }`}
+                    >
+                      {inCart ? 'ADDED TO CART' : 'ADD TO CART'}
+                    </button>
+                  )}
+                </div>
               )
             })()}
 
@@ -281,31 +328,29 @@ function ProductDetail() {
                         ) : (
                           <p>{product.description || 'No description available.'}</p>
                         )}
-                        {product.materialCare && (
-                          <div className="pt-2 border-t border-[#D1C7B7]/20">
-                            <p className="text-xs uppercase tracking-wide text-[#D1C7B7]/70 mb-0.5">Material & Care</p>
-                            <p className="font-medium text-[#D1C7B7]">{product.materialCare}</p>
-                          </div>
-                        )}
+                        <div className="pt-2 border-t border-[#D1C7B7]/20">
+                          <p className="text-xs uppercase tracking-wide text-[#D1C7B7]/70 mb-0.5">Material &amp; Care</p>
+                          <ul className="mt-1 space-y-1 text-[#D1C7B7] text-sm list-disc list-inside">
+                            <li>Wash gently</li>
+                            <li>Iron at low or medium heat</li>
+                            <li>Dry wash or machine wash only</li>
+                            <li>Use mild detergent</li>
+                            <li>Do not brush wash</li>
+                            <li>Slight color loss may occur in first 2–3 washes</li>
+                            <li>Fabric may shrink up to approximately half an inch after washing</li>
+                            <li>Delicate care wash</li>
+                            <li>Avoid strong bleach</li>
+                          </ul>
+                        </div>
                       </div>
                     )
                   })(),
                 },
                 {
                   id: 'shipping',
-                  title: 'SHIPPING RETURNS & EXCHANGE',
+                  title: 'RETURNS & EXCHANGE',
                   content: (
                     <div className="space-y-4 text-sm text-[#D1C7B7]/95 leading-relaxed">
-                      <div>
-                        <p className="font-semibold uppercase tracking-wide text-[#D1C7B7] mb-2">SHIPPING –</p>
-                        <ul className="list-none space-y-1.5 pl-0">
-                          <li>Same day and Next day delivery available for select pincodes.</li>
-                          <li>Free shipping for domestic & international orders.</li>
-                          <li>Products are dispatched from our warehouse within 2–5 working days.</li>
-                          <li>The order will be delivered in 3–10 working days depending on the pincode.</li>
-                          <li>You will receive an order tracking number as soon as we ship your order.</li>
-                        </ul>
-                      </div>
                       <div>
                         <p className="font-semibold uppercase tracking-wide text-[#D1C7B7] mb-2">EXCHANGE –</p>
                         <ul className="list-none space-y-1.5 pl-0">
@@ -413,11 +458,9 @@ function ProductDetail() {
                       <tr className="border-b border-[#D1C7B7]/20"><td className="py-2.5 pr-4 font-medium">Armhole</td><td className="py-2.5 px-2 text-center">15</td><td className="py-2.5 px-2 text-center">16</td><td className="py-2.5 px-2 text-center">17</td><td className="py-2.5 px-2 text-center">18</td><td className="py-2.5 px-2 text-center">19</td></tr>
                       <tr className="border-b border-[#D1C7B7]/20"><td className="py-2.5 pr-4 font-medium">Sleeve Length</td><td className="py-2.5 px-2 text-center">22</td><td className="py-2.5 px-2 text-center">22.5</td><td className="py-2.5 px-2 text-center">23</td><td className="py-2.5 px-2 text-center">23.5</td><td className="py-2.5 px-2 text-center">24</td></tr>
                       <tr className="border-b border-[#D1C7B7]/20"><td className="py-2.5 pr-4 font-medium">Sleeve Round (Bicep)</td><td className="py-2.5 px-2 text-center">10.5</td><td className="py-2.5 px-2 text-center">11.5</td><td className="py-2.5 px-2 text-center">12.5</td><td className="py-2.5 px-2 text-center">13.5</td><td className="py-2.5 px-2 text-center">14.5</td></tr>
-                      <tr className="border-b border-[#D1C7B7]/20"><td className="py-2.5 pr-4 font-medium text-[#D1C7B7]/80">Mention your height</td><td className="py-2.5 px-2 text-center" colSpan={5}>—</td></tr>
                     </tbody>
                   </table>
                 </div>
-                <p className="text-sm text-[#D1C7B7]/80 mt-4">Mention your height for a better fit.</p>
               </div>
             </div>
           </div>
@@ -459,7 +502,7 @@ function ProductDetail() {
                     const res = await createCustomSize(customSizeForm)
                     addToCart(product.id, 'Custom', res.id)
                     setCustomSizeModalOpen(false)
-                    setCustomSizeForm({ bust: '', waist: '', hip: '', shoulder: '', armhole: '', sleeveLength: '', sleeveRoundBicep: '', height: '' })
+                    setCustomSizeForm({ bust: '', waist: '', hip: '', shoulder: '', armhole: '', sleeveLength: '', sleeveRoundBicep: '', height: '', remark: '' })
                   } catch (err) {
                     setCustomSizeError(err.message || 'Failed to save')
                   } finally {
@@ -498,6 +541,16 @@ function ProductDetail() {
                     onChange={(e) => setCustomSizeForm((f) => ({ ...f, height: e.target.value }))}
                     className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7]"
                     placeholder="Mention your height"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">Remark</label>
+                  <textarea
+                    value={customSizeForm.remark}
+                    onChange={(e) => setCustomSizeForm((f) => ({ ...f, remark: e.target.value }))}
+                    className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7] resize-none"
+                    placeholder="Any special instructions or notes"
+                    rows={3}
                   />
                 </div>
                 <div className="flex gap-3">

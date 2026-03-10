@@ -210,7 +210,7 @@ export default function AdminInventory() {
                     </div>
                     <div className="mt-3">
                       <p className="text-xs text-[#E5E5E5]/80 mb-1">
-                        Product images (max 3). Current: {products.find((p) => p.id === editingId)?.imageUrls?.length ?? 0}/3
+                        Product images (max 6). Current: {products.find((p) => p.id === editingId)?.imageUrls?.length ?? 0}/6
                       </p>
                       <div className="flex flex-wrap items-center gap-2">
                         <input

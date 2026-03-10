@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Service
 public class ProductService {
 
-    private static final int MAX_IMAGES = 3;
+    private static final int MAX_IMAGES = 6;
 
     private final ProductRepository productRepository;
 

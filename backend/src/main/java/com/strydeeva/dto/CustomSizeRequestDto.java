@@ -10,6 +10,7 @@ public class CustomSizeRequestDto {
     private String sleeveLength;
     private String sleeveRoundBicep;
     private String height;
+    private String remark;
 
     public String getBust() { return bust; }
     public void setBust(String bust) { this.bust = bust; }
@@ -27,6 +28,8 @@ public class CustomSizeRequestDto {
     public void setSleeveRoundBicep(String sleeveRoundBicep) { this.sleeveRoundBicep = sleeveRoundBicep; }
     public String getHeight() { return height; }
     public void setHeight(String height) { this.height = height; }
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 
     public static String trim(String s) {
         return s != null ? s.trim() : "";

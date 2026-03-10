@@ -23,14 +23,16 @@ public class OrderResponseDto {
         private String sizeName;
         private int quantity;
         private BigDecimal unitPrice;
+        private Long customSizeId;
 
         public OrderItemDto() {}
 
-        public OrderItemDto(String productName, String sizeName, int quantity, BigDecimal unitPrice) {
+        public OrderItemDto(String productName, String sizeName, int quantity, BigDecimal unitPrice, Long customSizeId) {
             this.productName = productName;
             this.sizeName = sizeName;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
+            this.customSizeId = customSizeId;
         }
 
         public String getProductName() { return productName; }
@@ -41,6 +43,8 @@ public class OrderResponseDto {
         public void setQuantity(int quantity) { this.quantity = quantity; }
         public BigDecimal getUnitPrice() { return unitPrice; }
         public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+        public Long getCustomSizeId() { return customSizeId; }
+        public void setCustomSizeId(Long customSizeId) { this.customSizeId = customSizeId; }
     }
 
     public Long getId() { return id; }

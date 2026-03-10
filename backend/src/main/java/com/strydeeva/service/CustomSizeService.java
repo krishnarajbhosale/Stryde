@@ -26,6 +26,12 @@ public class CustomSizeService {
         entity.setSleeveLength(CustomSizeRequestDto.trim(dto.getSleeveLength()));
         entity.setSleeveRoundBicep(CustomSizeRequestDto.trim(dto.getSleeveRoundBicep()));
         entity.setHeight(CustomSizeRequestDto.trim(dto.getHeight()));
+        entity.setRemark(CustomSizeRequestDto.trim(dto.getRemark()));
         return customSizeRepository.save(entity);
+    }
+
+    @Transactional(readOnly = true)
+    public CustomSize findById(Long id) {
+        return customSizeRepository.findById(id).orElse(null);
     }
 }

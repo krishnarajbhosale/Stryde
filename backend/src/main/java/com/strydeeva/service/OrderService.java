@@ -106,7 +106,8 @@ public class OrderService {
                 itemReq.getProductName() != null ? itemReq.getProductName() : "",
                 itemReq.getSizeName() != null ? itemReq.getSizeName() : "",
                 Math.max(1, itemReq.getQuantity()),
-                itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO
+                itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO,
+                itemReq.getCustomSizeId()
             ));
         }
         dto.setItems(itemDtos);
@@ -181,7 +182,8 @@ public class OrderService {
                 item.getProductName(),
                 item.getSizeName(),
                 item.getQuantity(),
-                item.getUnitPrice()
+                item.getUnitPrice(),
+                item.getCustomSizeId()
             ))
             .collect(Collectors.toList()));
         return dto;
