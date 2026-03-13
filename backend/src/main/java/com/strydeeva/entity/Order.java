@@ -21,6 +21,9 @@ public class Order {
     @Column(name = "customer_email", length = 255)
     private String customerEmail;
 
+    @Column(name = "customer_mobile", length = 50)
+    private String customerMobile;
+
     @Column(name = "customer_name", length = 255)
     private String customerName;
 
@@ -32,6 +35,9 @@ public class Order {
 
     @Column(name = "pin_code", length = 20)
     private String pinCode;
+
+    @Column(name = "gst_number", length = 50)
+    private String gstNumber;
 
     @Column(name = "total_amount", precision = 12, scale = 2)
     private BigDecimal totalAmount;
@@ -58,6 +64,8 @@ public class Order {
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
     public String getCustomerEmail() { return customerEmail; }
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getCustomerMobile() { return customerMobile; }
+    public void setCustomerMobile(String customerMobile) { this.customerMobile = customerMobile; }
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getShippingAddress() { return shippingAddress; }
@@ -66,6 +74,8 @@ public class Order {
     public void setCity(String city) { this.city = city; }
     public String getPinCode() { return pinCode; }
     public void setPinCode(String pinCode) { this.pinCode = pinCode; }
+    public String getGstNumber() { return gstNumber; }
+    public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public OrderStatus getStatus() { return status; }

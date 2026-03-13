@@ -94,21 +94,10 @@ function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-[#333]">
-        <div className="max-w-[1430px] mx-auto px-4 md:px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <p className="text-[#808080] text-xs">
+        <div className="max-w-[1430px] mx-auto px-4 md:px-6 py-5 flex items-center justify-center">
+          <p className="text-[#808080] text-xs text-center">
             © 2026 STRYDEEVA. All rights reserved
           </p>
-          <div className="flex gap-6">
-            <a href="/privacy" className="text-[#808080] text-xs hover:text-[#E5E5E5] transition-colors">
-              Privacy
-            </a>
-            <a href="/terms" className="text-[#808080] text-xs hover:text-[#E5E5E5] transition-colors">
-              Terms
-            </a>
-            <a href="/conditions" className="text-[#808080] text-xs hover:text-[#E5E5E5] transition-colors">
-              Conditions
-            </a>
-          </div>
         </div>
       </div>
     </footer>

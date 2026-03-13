@@ -143,6 +143,8 @@ public class ProductService {
         if (opt.isEmpty()) return Optional.empty();
         Product product = opt.get();
         List<ProductImage> existing = product.getImages() != null ? product.getImages() : new ArrayList<>();
+        // Ensure images are ordered by sortOrder before appending
+        existing.sort(Comparator.comparingInt(ProductImage::getSortOrder));
         int nextOrder = existing.size();
         if (imageFiles != null && !imageFiles.isEmpty()) {
             for (MultipartFile file : imageFiles) {
@@ -161,6 +163,52 @@ public class ProductService {
                 }
             }
         }
+        productRepository.saveAndFlush(product);
+        return productRepository.findByIdWithImagesAndSizes(productId).map(p -> toDto(p, true));
+    }
+
+    /** Delete a single image by its index (based on sortOrder) and re-normalize sortOrder. */
+    @Transactional
+    public Optional<ProductResponseDto> deleteProductImage(Long productId, int imageIndex) {
+        Optional<Product> opt = productRepository.findByIdWithImagesAndSizes(productId);
+        if (opt.isEmpty()) return Optional.empty();
+        Product product = opt.get();
+        List<ProductImage> imgs = product.getImages() != null ? product.getImages() : new ArrayList<>();
+        if (imgs.isEmpty()) return Optional.of(toDto(product, true));
+        imgs.sort(Comparator.comparingInt(ProductImage::getSortOrder));
+        if (imageIndex < 0 || imageIndex >= imgs.size()) {
+            return Optional.of(toDto(product, true));
+        }
+        imgs.remove(imageIndex);
+        for (int i = 0; i < imgs.size(); i++) {
+            imgs.get(i).setSortOrder(i);
+        }
+        productRepository.saveAndFlush(product);
+        return productRepository.findByIdWithImagesAndSizes(productId).map(p -> toDto(p, true));
+    }
+
+    /** Move a single image from one index to another and normalize sortOrder. */
+    @Transactional
+    public Optional<ProductResponseDto> moveProductImage(Long productId, int fromIndex, int toIndex) {
+        Optional<Product> opt = productRepository.findByIdWithImagesAndSizes(productId);
+        if (opt.isEmpty()) return Optional.empty();
+        Product product = opt.get();
+
+        List<ProductImage> imgs = product.getImages() != null ? product.getImages() : new ArrayList<>();
+        if (imgs.isEmpty()) return Optional.of(toDto(product, true));
+
+        // Sort in-place by current sortOrder so indices match what the UI sees
+        imgs.sort(Comparator.comparingInt(ProductImage::getSortOrder));
+        int size = imgs.size();
+        if (fromIndex < 0 || fromIndex >= size || toIndex < 0 || toIndex >= size || fromIndex == toIndex) {
+            return Optional.of(toDto(product, true));
+        }
+
+        Collections.swap(imgs, fromIndex, toIndex);
+        for (int i = 0; i < size; i++) {
+            imgs.get(i).setSortOrder(i);
+        }
+
         productRepository.saveAndFlush(product);
         return productRepository.findByIdWithImagesAndSizes(productId).map(p -> toDto(p, true));
     }

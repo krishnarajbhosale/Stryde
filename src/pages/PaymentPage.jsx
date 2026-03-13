@@ -56,10 +56,6 @@ function PaymentPage() {
   const totalAmount = subtotal + gstAmount
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
-  useEffect(() => {
     if (cart.length === 0) navigate('/cart', { replace: true })
   }, [cart.length, navigate])
 
@@ -77,11 +73,13 @@ function PaymentPage() {
     try {
       const customerName = [checkoutForm.firstName, checkoutForm.lastName].filter(Boolean).join(' ') || 'Customer'
       const payload = {
-        customerEmail: String(checkoutForm.emailOrMobile || 'guest@strydeeva.com').trim(),
+        customerEmail: String(checkoutForm.email || 'guest@strydeeva.com').trim(),
+        customerMobile: String(checkoutForm.mobile || '').trim(),
         customerName: String(customerName).trim(),
         shippingAddress: String(checkoutForm.address || '').trim(),
         city: String(checkoutForm.city || '').trim(),
         pinCode: String(checkoutForm.pinCode || '').trim(),
+        gstNumber: String(checkoutForm.gstNumber || '').trim(),
         totalAmount: Number(totalAmount),
         items: cartItemsWithProduct.map((item) => {
           const obj = {
@@ -299,3 +297,4 @@ function PaymentPage() {
 }
 
 export default PaymentPage
+

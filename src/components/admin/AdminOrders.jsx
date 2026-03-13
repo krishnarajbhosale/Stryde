@@ -98,6 +98,12 @@ export default function AdminOrders() {
                   <td className="py-3 pr-4 text-[#E5E5E5]">
                     {o.customerName || '—'}<br />
                     <span className="text-[#E5E5E5]/70">{o.customerEmail || '—'}</span>
+                    {o.customerMobile && (
+                      <>
+                        <br />
+                        <span className="text-[#E5E5E5]/70">Mob: {o.customerMobile}</span>
+                      </>
+                    )}
                   </td>
                   <td className="py-3 pr-4 text-[#E5E5E5]">₹{o.totalAmount != null ? Number(o.totalAmount).toLocaleString('en-IN') : '—'}</td>
                   <td className="py-3 pr-4 text-[#E5E5E5]/80">
@@ -151,6 +157,9 @@ export default function AdminOrders() {
                   <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-1">Customer</p>
                   <p className="font-medium text-[#E5E5E5]">{selectedOrder.customerName || '—'}</p>
                   <p className="text-[#E5E5E5]/70">{selectedOrder.customerEmail || '—'}</p>
+                  {selectedOrder.customerMobile && (
+                    <p className="text-[#E5E5E5]/70">Mobile: {selectedOrder.customerMobile}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-1">Order Info</p>
@@ -170,6 +179,9 @@ export default function AdminOrders() {
                 <p>{selectedOrder.shippingAddress || '—'}</p>
                 <p>
                   {selectedOrder.city || '—'} {selectedOrder.pinCode ? `- ${selectedOrder.pinCode}` : ''}
+                </p>
+                <p className="mt-1 text-[#E5E5E5]/70 text-xs">
+                  GST: {selectedOrder.gstNumber && selectedOrder.gstNumber.trim() ? selectedOrder.gstNumber : '—'}
                 </p>
               </div>
 

@@ -26,24 +26,26 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductSizeInventoryRepository productSizeInventoryRepository;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            .withZone(ZoneId.systemDefault());
 
-    public OrderService(OrderRepository orderRepository, ProductSizeInventoryRepository productSizeInventoryRepository) {
+    public OrderService(OrderRepository orderRepository,
+            ProductSizeInventoryRepository productSizeInventoryRepository) {
         this.orderRepository = orderRepository;
         this.productSizeInventoryRepository = productSizeInventoryRepository;
     }
 
     public List<OrderResponseDto> getConfirmedOrders() {
         return orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CONFIRMED).stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     public List<OrderResponseDto> getAllOrders() {
         return orderRepository.findAll().stream()
-            .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-            .map(this::toDto)
-            .collect(Collectors.toList());
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -54,10 +56,12 @@ public class OrderService {
         Order order = new Order();
         order.setOrderNumber("STR-" + System.currentTimeMillis());
         order.setCustomerEmail(request.getCustomerEmail() != null ? request.getCustomerEmail().trim() : "");
+        order.setCustomerMobile(request.getCustomerMobile() != null ? request.getCustomerMobile().trim() : "");
         order.setCustomerName(request.getCustomerName() != null ? request.getCustomerName().trim() : "");
         order.setShippingAddress(request.getShippingAddress() != null ? request.getShippingAddress().trim() : "");
         order.setCity(request.getCity() != null ? request.getCity().trim() : "");
         order.setPinCode(request.getPinCode() != null ? request.getPinCode().trim() : "");
+        order.setGstNumber(request.getGstNumber() != null ? request.getGstNumber().trim() : "");
         order.setTotalAmount(request.getTotalAmount() != null ? request.getTotalAmount() : BigDecimal.ZERO);
         order.setStatus(OrderStatus.CONFIRMED);
 
@@ -77,15 +81,19 @@ public class OrderService {
 
         order = orderRepository.save(order);
 
-        // Decrement product size inventory for each ordered item (skip custom size items)
+        // Decrement product size inventory for each ordered item (skip custom size
+        // items)
         for (OrderItem orderItem : order.getItems()) {
-            if (orderItem.getProductId() == null || orderItem.getSizeName() == null || "Custom".equalsIgnoreCase(orderItem.getSizeName()) || orderItem.getCustomSizeId() != null) continue;
-            productSizeInventoryRepository.findByProduct_IdAndSizeName(orderItem.getProductId(), orderItem.getSizeName())
-                .ifPresent(inv -> {
-                    int newQty = Math.max(0, inv.getQuantity() - orderItem.getQuantity());
-                    inv.setQuantity(newQty);
-                    productSizeInventoryRepository.save(inv);
-                });
+            if (orderItem.getProductId() == null || orderItem.getSizeName() == null
+                    || "Custom".equalsIgnoreCase(orderItem.getSizeName()) || orderItem.getCustomSizeId() != null)
+                continue;
+            productSizeInventoryRepository
+                    .findByProduct_IdAndSizeName(orderItem.getProductId(), orderItem.getSizeName())
+                    .ifPresent(inv -> {
+                        int newQty = Math.max(0, inv.getQuantity() - orderItem.getQuantity());
+                        inv.setQuantity(newQty);
+                        productSizeInventoryRepository.save(inv);
+                    });
         }
 
         // Build response from saved order + request to avoid lazy-load on items
@@ -93,22 +101,23 @@ public class OrderService {
         dto.setId(order.getId());
         dto.setOrderNumber(order.getOrderNumber());
         dto.setCustomerEmail(order.getCustomerEmail());
+        dto.setCustomerMobile(order.getCustomerMobile());
         dto.setCustomerName(order.getCustomerName());
         dto.setShippingAddress(order.getShippingAddress());
         dto.setCity(order.getCity());
         dto.setPinCode(order.getPinCode());
+        dto.setGstNumber(order.getGstNumber());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
         dto.setCreatedAt(order.getCreatedAt());
         List<OrderResponseDto.OrderItemDto> itemDtos = new ArrayList<>();
         for (CreateOrderRequestDto.OrderItemRequestDto itemReq : request.getItems()) {
             itemDtos.add(new OrderResponseDto.OrderItemDto(
-                itemReq.getProductName() != null ? itemReq.getProductName() : "",
-                itemReq.getSizeName() != null ? itemReq.getSizeName() : "",
-                Math.max(1, itemReq.getQuantity()),
-                itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO,
-                itemReq.getCustomSizeId()
-            ));
+                    itemReq.getProductName() != null ? itemReq.getProductName() : "",
+                    itemReq.getSizeName() != null ? itemReq.getSizeName() : "",
+                    Math.max(1, itemReq.getQuantity()),
+                    itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO,
+                    itemReq.getCustomSizeId()));
         }
         dto.setItems(itemDtos);
         return dto;
@@ -125,8 +134,9 @@ public class OrderService {
 
             int rowNum = 0;
             Row headerRow = sheet.createRow(rowNum++);
-            String[] headers = { "Order ID", "Order Number", "Customer Name", "Customer Email", "Address", "City", "Pin Code",
-                "Total Amount", "Status", "Created At", "Items (Product, Size, Qty, Price)" };
+            String[] headers = { "Order ID", "Order Number", "Customer Name", "Customer Email", "Address", "City",
+                    "Pin Code",
+                    "Total Amount", "Status", "Created At", "Items (Product, Size, Qty, Price)" };
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -142,15 +152,18 @@ public class OrderService {
                 row.createCell(4).setCellValue(order.getShippingAddress() != null ? order.getShippingAddress() : "");
                 row.createCell(5).setCellValue(order.getCity() != null ? order.getCity() : "");
                 row.createCell(6).setCellValue(order.getPinCode() != null ? order.getPinCode() : "");
-                row.createCell(7).setCellValue(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0);
+                row.createCell(7)
+                        .setCellValue(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0);
                 row.createCell(8).setCellValue(order.getStatus() != null ? order.getStatus().name() : "");
-                row.createCell(9).setCellValue(order.getCreatedAt() != null ? FORMATTER.format(order.getCreatedAt()) : "");
+                row.createCell(9)
+                        .setCellValue(order.getCreatedAt() != null ? FORMATTER.format(order.getCreatedAt()) : "");
                 StringBuilder itemsStr = new StringBuilder();
                 for (OrderItem item : order.getItems()) {
-                    if (itemsStr.length() > 0) itemsStr.append("; ");
+                    if (itemsStr.length() > 0)
+                        itemsStr.append("; ");
                     itemsStr.append(item.getProductName()).append(" | ").append(item.getSizeName())
-                        .append(" | Qty:").append(item.getQuantity())
-                        .append(" | ₹").append(item.getUnitPrice() != null ? item.getUnitPrice() : "0");
+                            .append(" | Qty:").append(item.getQuantity())
+                            .append(" | ₹").append(item.getUnitPrice() != null ? item.getUnitPrice() : "0");
                 }
                 row.createCell(10).setCellValue(itemsStr.toString());
             }
@@ -170,6 +183,7 @@ public class OrderService {
         dto.setId(order.getId());
         dto.setOrderNumber(order.getOrderNumber());
         dto.setCustomerEmail(order.getCustomerEmail());
+        dto.setCustomerMobile(order.getCustomerMobile());
         dto.setCustomerName(order.getCustomerName());
         dto.setShippingAddress(order.getShippingAddress());
         dto.setCity(order.getCity());
@@ -178,14 +192,13 @@ public class OrderService {
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
         dto.setCreatedAt(order.getCreatedAt());
         dto.setItems(order.getItems().stream()
-            .map(item -> new OrderResponseDto.OrderItemDto(
-                item.getProductName(),
-                item.getSizeName(),
-                item.getQuantity(),
-                item.getUnitPrice(),
-                item.getCustomSizeId()
-            ))
-            .collect(Collectors.toList()));
+                .map(item -> new OrderResponseDto.OrderItemDto(
+                        item.getProductName(),
+                        item.getSizeName(),
+                        item.getQuantity(),
+                        item.getUnitPrice(),
+                        item.getCustomSizeId()))
+                .collect(Collectors.toList()));
         return dto;
     }
 }

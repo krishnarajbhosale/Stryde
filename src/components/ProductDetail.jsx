@@ -30,10 +30,6 @@ function ProductDetail() {
   const [customSizeError, setCustomSizeError] = useState('')
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [id])
-
-  useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError('')
@@ -119,12 +115,12 @@ function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 lg:items-start">
           {/* Left: Gallery with slideshow and horizontal scroller */}
           <div className="flex flex-col gap-4 lg:sticky lg:top-24">
-            {/* Main image with next/prev controls */}
-            <div className="relative w-full aspect-[4/5] lg:aspect-[4/5] lg:max-h-[min(80vh,700px)] overflow-hidden bg-neutral-800 rounded-sm">
+            {/* Main image with next/prev controls - full image visible, aspect ratio preserved */}
+            <div className="relative w-full min-h-[280px] aspect-[4/5] lg:max-h-[min(80vh,700px)] flex items-center justify-center overflow-hidden bg-neutral-800 rounded-sm">
               <img
                 src={images[mainImage]}
                 alt={product.name}
-                className="w-full h-full object-cover object-center"
+                className="max-w-full max-h-[min(80vh,700px)] w-auto h-auto object-contain object-center"
               />
               {images.length > 1 && (
                 <>

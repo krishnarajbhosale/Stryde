@@ -12,8 +12,11 @@ import java.util.List;
 
 public class CreateOrderRequestDto {
 
-    @NotBlank(message = "Customer email or mobile is required")
+    @NotBlank(message = "Customer email is required")
     private String customerEmail;
+
+    @NotBlank(message = "Customer mobile is required")
+    private String customerMobile;
 
     @NotBlank(message = "Customer name is required")
     private String customerName;
@@ -27,6 +30,7 @@ public class CreateOrderRequestDto {
     @NotBlank(message = "Pin code is required")
     private String pinCode;
 
+    private String gstNumber;
     @NotNull(message = "Total amount is required")
     @DecimalMin(value = "0", message = "Total amount must be >= 0")
     private BigDecimal totalAmount;
@@ -69,6 +73,8 @@ public class CreateOrderRequestDto {
 
     public String getCustomerEmail() { return customerEmail; }
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getCustomerMobile() { return customerMobile; }
+    public void setCustomerMobile(String customerMobile) { this.customerMobile = customerMobile; }
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getShippingAddress() { return shippingAddress; }
@@ -77,6 +83,8 @@ public class CreateOrderRequestDto {
     public void setCity(String city) { this.city = city; }
     public String getPinCode() { return pinCode; }
     public void setPinCode(String pinCode) { this.pinCode = pinCode; }
+    public String getGstNumber() { return gstNumber; }
+    public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public List<OrderItemRequestDto> getItems() { return items; }

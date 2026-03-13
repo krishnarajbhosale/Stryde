@@ -5,14 +5,16 @@ import {
   deleteProduct,
   updateProduct,
   uploadProductImages,
+  deleteProductImage,
+  moveProductImage,
 } from '../../api/adminApi'
 import { parseProductDetails, buildProductDetails, getDefaultProductDetails, PRODUCT_DETAIL_KEYS, FULL_WIDTH_KEYS } from '../../utils/productDetailsFormat'
 
-function AdminProductImage({ productId, alt }) {
+function AdminProductImage({ productId, alt, index = 0 }) {
   const [src, setSrc] = useState(null)
   useEffect(() => {
     let blobUrl = null
-    getProductImageBlobUrl(productId, 0).then((url) => {
+    getProductImageBlobUrl(productId, index).then((url) => {
       blobUrl = url
       setSrc(url)
     })
@@ -105,6 +107,30 @@ export default function AdminInventory() {
       setEditingId(null)
     } catch (e) {
       setError(e.message || 'Update failed')
+    }
+  }
+
+  const handleDeleteImage = async (productId, index) => {
+    if (!window.confirm('Delete this image?')) return
+    try {
+      await deleteProductImage(productId, index)
+      await loadProducts()
+    } catch (e) {
+      setError(e.message || 'Failed to delete image')
+    }
+  }
+
+  const handleMoveImage = async (productId, currentIndex, direction) => {
+    const product = products.find((p) => p.id === productId)
+    if (!product || !product.imageUrls || product.imageUrls.length < 2) return
+    const count = product.imageUrls.length
+    const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= count) return
+    try {
+      await moveProductImage(productId, currentIndex, nextIndex)
+      await loadProducts()
+    } catch (e) {
+      setError(e.message || 'Failed to reorder images')
     }
   }
 
@@ -212,25 +238,63 @@ export default function AdminInventory() {
                       <p className="text-xs text-[#E5E5E5]/80 mb-1">
                         Product images (max 6). Current: {products.find((p) => p.id === editingId)?.imageUrls?.length ?? 0}/6
                       </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
-                          className="text-sm text-[#E5E5E5] file:mr-2 file:py-1 file:px-2 file:border file:border-[#D1C7B7] file:bg-transparent file:text-[#D1C7B7] file:text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleUploadImages}
-                          disabled={uploadingImages || imageFiles.length === 0}
-                          className="py-1.5 px-3 text-sm bg-[#D1C7B7] text-[#1a1a1a] disabled:opacity-50"
-                        >
-                          {uploadingImages ? 'Uploading…' : 'Upload images'}
-                        </button>
-                        {imageFiles.length > 0 && (
-                          <span className="text-xs text-[#E5E5E5]/70">{imageFiles.length} file(s) selected</span>
+                      <div className="flex flex-col gap-2">
+                        {p.imageUrls && p.imageUrls.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {p.imageUrls.map((_, index) => (
+                              <div key={index} className="flex flex-col items-center gap-1">
+                                <div className="w-16 h-20 bg-neutral-800 overflow-hidden rounded-sm">
+                                  <AdminProductImage productId={p.id} alt={`${p.name} image ${index + 1}`} index={index} />
+                                </div>
+                                <div className="flex gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveImage(p.id, index, -1)}
+                                    disabled={index === 0}
+                                    className="px-1 py-0.5 text-[10px] border border-[#E5E5E5]/40 text-[#E5E5E5]/80 disabled:opacity-40"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveImage(p.id, index, 1)}
+                                    disabled={index === (p.imageUrls?.length ?? 0) - 1}
+                                    className="px-1 py-0.5 text-[10px] border border-[#E5E5E5]/40 text-[#E5E5E5]/80 disabled:opacity-40"
+                                  >
+                                    ↓
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteImage(p.id, index)}
+                                    className="px-1.5 py-0.5 text-[10px] border border-red-400/60 text-red-400 hover:bg-red-400/10"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
+                            className="text-sm text-[#E5E5E5] file:mr-2 file:py-1 file:px-2 file:border file:border-[#D1C7B7] file:bg-transparent file:text-[#D1C7B7] file:text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleUploadImages}
+                            disabled={uploadingImages || imageFiles.length === 0}
+                            className="py-1.5 px-3 text-sm bg-[#D1C7B7] text-[#1a1a1a] disabled:opacity-50"
+                          >
+                            {uploadingImages ? 'Uploading…' : 'Upload images'}
+                          </button>
+                          {imageFiles.length > 0 && (
+                            <span className="text-xs text-[#E5E5E5]/70">{imageFiles.length} file(s) selected</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-2">

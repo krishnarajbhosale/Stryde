@@ -9,10 +9,12 @@ public class OrderResponseDto {
     private Long id;
     private String orderNumber;
     private String customerEmail;
+    private String customerMobile;
     private String customerName;
     private String shippingAddress;
     private String city;
     private String pinCode;
+    private String gstNumber;
     private BigDecimal totalAmount;
     private String status;
     private Instant createdAt;
@@ -53,6 +55,8 @@ public class OrderResponseDto {
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
     public String getCustomerEmail() { return customerEmail; }
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getCustomerMobile() { return customerMobile; }
+    public void setCustomerMobile(String customerMobile) { this.customerMobile = customerMobile; }
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getShippingAddress() { return shippingAddress; }
@@ -61,6 +65,8 @@ public class OrderResponseDto {
     public void setCity(String city) { this.city = city; }
     public String getPinCode() { return pinCode; }
     public void setPinCode(String pinCode) { this.pinCode = pinCode; }
+    public String getGstNumber() { return gstNumber; }
+    public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public String getStatus() { return status; }

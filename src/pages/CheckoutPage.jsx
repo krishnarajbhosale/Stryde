@@ -17,7 +17,9 @@ function CheckoutPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
-    emailOrMobile: '',
+    email: '',
+    mobile: '',
+    gstNumber: '',
     keepUpdated: false,
     firstName: '',
     lastName: '',
@@ -51,10 +53,6 @@ function CheckoutPage() {
   const subtotal = totalMRP - discount
   const gstAmount = Math.round(subtotal * GST_RATE)
   const totalAmount = subtotal + gstAmount
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
 
   useEffect(() => {
     if (cart.length === 0) navigate('/cart', { replace: true })
@@ -178,16 +176,28 @@ function CheckoutPage() {
                 <h2 className="text-xs md:text-sm font-medium tracking-wide uppercase text-[#E5E5E5] mb-4">
                   CONTACT INFORMATION
                 </h2>
-                <input
-                  type="text"
-                  name="emailOrMobile"
-                  value={form.emailOrMobile}
-                  onChange={handleChange}
-                  placeholder="Email Or Mobile Number"
-                  className={inputUnderline}
-                  aria-label="Email or mobile number"
-                  required
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="Email ID"
+                    className={inputUnderline}
+                    aria-label="Email ID"
+                    required
+                  />
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={form.mobile}
+                    onChange={handleChange}
+                    placeholder="Mobile Number"
+                    className={inputUnderline}
+                    aria-label="Mobile number"
+                    required
+                  />
+                </div>
                 <label className="flex items-center gap-3 mt-4 cursor-pointer">
                   <input
                     type="checkbox"
@@ -236,7 +246,7 @@ function CheckoutPage() {
                   aria-label="Address"
                   required
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <input
                     type="text"
                     name="city"
@@ -258,6 +268,15 @@ function CheckoutPage() {
                     required
                   />
                 </div>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={form.gstNumber}
+                  onChange={handleChange}
+                  placeholder="GST Number (optional)"
+                  className={inputUnderline}
+                  aria-label="GST Number"
+                />
               </section>
 
               <div className="border-t border-[#E5E5E5]/20 pt-6">
@@ -280,16 +299,28 @@ function CheckoutPage() {
                 <h2 className="text-sm font-medium tracking-wide uppercase text-[#E5E5E5] mb-4">
                   CONTACT INFORMATION
                 </h2>
-                <input
-                  type="text"
-                  name="emailOrMobile"
-                  value={form.emailOrMobile}
-                  onChange={handleChange}
-                  placeholder="Email ID / Mobile Number"
-                  className={inputUnderline}
-                  aria-label="Email or mobile number"
-                  required
-                />
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="Email ID"
+                    className={inputUnderline}
+                    aria-label="Email ID"
+                    required
+                  />
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={form.mobile}
+                    onChange={handleChange}
+                    placeholder="Mobile Number"
+                    className={inputUnderline}
+                    aria-label="Mobile number"
+                    required
+                  />
+                </div>
                 <label className="flex items-center gap-3 mt-4 cursor-pointer">
                   <input
                     type="checkbox"
@@ -338,7 +369,7 @@ function CheckoutPage() {
                   aria-label="Address"
                   required
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <input
                     type="text"
                     name="city"
@@ -360,6 +391,15 @@ function CheckoutPage() {
                     required
                   />
                 </div>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={form.gstNumber}
+                  onChange={handleChange}
+                  placeholder="GST Number (optional)"
+                  className={inputUnderline}
+                  aria-label="GST Number"
+                />
               </section>
 
               <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/20">
@@ -390,3 +430,4 @@ function CheckoutPage() {
 }
 
 export default CheckoutPage
+

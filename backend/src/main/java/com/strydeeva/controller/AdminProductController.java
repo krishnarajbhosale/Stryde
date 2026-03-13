@@ -63,6 +63,13 @@ public class AdminProductController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/{id}/image/{index}")
+    public ResponseEntity<ProductResponseDto> deleteImage(@PathVariable Long id, @PathVariable int index) {
+        return productService.deleteProductImage(id, index)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return productService.updateProduct(id, body)
@@ -76,6 +83,17 @@ public class AdminProductController {
             @RequestParam(value = "images", required = false) List<MultipartFile> images
     ) {
         return productService.addProductImages(id, images != null ? images : List.of())
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/images/move")
+    public ResponseEntity<ProductResponseDto> moveImage(
+            @PathVariable Long id,
+            @RequestParam("from") int from,
+            @RequestParam("to") int to
+    ) {
+        return productService.moveProductImage(id, from, to)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }

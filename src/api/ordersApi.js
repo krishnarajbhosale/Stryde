@@ -7,10 +7,12 @@ const API_BASE = '/api/orders'
 /**
  * @param {{
  *   customerEmail: string
+ *   customerMobile: string
  *   customerName: string
  *   shippingAddress: string
  *   city: string
  *   pinCode: string
+ *   gstNumber?: string
  *   totalAmount: number
  *   items: Array<{ productId: number; productName: string; sizeName: string; quantity: number; unitPrice: number }>
  * }} payload

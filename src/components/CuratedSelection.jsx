@@ -104,6 +104,31 @@ function CuratedSelection({ products: productsProp, showAllProducts = false }) {
     }
   }, [filterOpen])
 
+  // Restore scroll position for product listing after navigating back,
+  // and save current scroll when leaving the page.
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    try {
+      const stored = sessionStorage.getItem('productListScroll')
+      if (stored) {
+        const y = parseInt(stored, 10)
+        if (!Number.isNaN(y)) {
+          window.scrollTo(0, y)
+        }
+        sessionStorage.removeItem('productListScroll')
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return () => {
+      try {
+        sessionStorage.setItem('productListScroll', String(window.scrollY || 0))
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [])
+
   return (
     <section
       className="w-full bg-black py-12 md:py-16"

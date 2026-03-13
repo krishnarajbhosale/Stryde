@@ -16,9 +16,19 @@ function ProductCard({ product }) {
     else addToCart(id, 'M')
   }
 
+  const handleCardClick = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('productListScroll', String(window.scrollY || 0))
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }
+
   return (
     <div className="group flex flex-col text-center h-full w-full">
-      <Link to={`/product/${id}`} className="flex-1 min-h-0 flex flex-col">
+      <Link to={`/product/${id}`} className="flex-1 min-h-0 flex flex-col" onClick={handleCardClick}>
         <div className="relative w-full aspect-[4/5] overflow-hidden bg-neutral-800 mb-3 flex-shrink-0">
           <img
             src={image}
@@ -31,11 +41,11 @@ function ProductCard({ product }) {
             </span>
           )}
         </div>
-        <div className="flex items-center justify-between text-left mb-3 flex-shrink-0">
-          <span className="text-[#D1C7B7] text-sm md:text-base font-normal truncate">
+        <div className="flex flex-col items-start gap-1 mb-3 flex-shrink-0 md:flex-row md:items-center md:justify-between">
+          <span className="text-[#D1C7B7] text-sm md:text-base font-normal text-left">
             {name}
           </span>
-          <span className="text-[#D1C7B7] text-sm md:text-base font-normal flex-shrink-0 flex items-center gap-2">
+          <span className="text-[#D1C7B7] text-sm md:text-base font-normal flex items-center gap-2 md:flex-shrink-0">
             {priceStrikethrough && (
               <span className="line-through text-[#E5E5E5]/60">{priceStrikethrough}</span>
             )}

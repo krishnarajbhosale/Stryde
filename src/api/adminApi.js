@@ -96,6 +96,29 @@ export async function uploadProductImages(productId, files) {
   return res.json()
 }
 
+/** Delete a single image for a product by index. Returns updated product. */
+export async function deleteProductImage(productId, index) {
+  const res = await fetch(`${API_BASE}/products/${productId}/image/${index}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to delete image')
+  return res.json()
+}
+
+/** Move a single image from one index to another for a product. */
+export async function moveProductImage(productId, fromIndex, toIndex) {
+  const res = await fetch(
+    `${API_BASE}/products/${productId}/images/move?from=${fromIndex}&to=${toIndex}`,
+    {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+    },
+  )
+  if (!res.ok) throw new Error('Failed to reorder images')
+  return res.json()
+}
+
 export async function deleteProduct(id) {
   const res = await fetch(`${API_BASE}/products/${id}`, {
     method: 'DELETE',
