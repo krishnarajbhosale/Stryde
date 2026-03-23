@@ -18,6 +18,10 @@ function TermsConditionsPage() {
           <p className="text-xs md:text-sm tracking-wide text-[#E5E5E5]/80 mb-8 max-w-2xl">
             Please read these terms and conditions carefully before using this website or placing an order.
           </p>
+          <p className="text-sm md:text-base text-[#E5E5E5]/90 leading-relaxed max-w-3xl mb-6 pb-4 border-b border-[#E5E5E5]/20">
+            Legal Name and Business Address: House of AS, S No. 56, Plot No. 30, Kharadi Road, Lane No. 8,
+            Aple Ghar Society, Pune Municipal Corporation, Pune City, Pune 411014.
+          </p>
 
           <div className="space-y-4 text-sm md:text-base text-[#E5E5E5]/85 leading-relaxed max-w-3xl">
             <p>1. By accessing and using this website, you agree to comply with all the terms and conditions stated here.</p>

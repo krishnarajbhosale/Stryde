@@ -25,19 +25,25 @@ function Footer() {
             </p>
           </div>
 
-          {/* SHOP */}
+          {/* POLICIES */}
           <div>
             <h3 className="text-[#E5E5E5] text-sm font-medium tracking-wide uppercase mb-4">
-              SHOP
+              POLICIES
             </h3>
             <ul className="list-none p-0 m-0 space-y-2">
-              {['New Collection'].map((label) => (
-                <li key={label}>
+              {[
+                { label: 'Terms & Condition', href: '/terms-and-condition' },
+                { label: 'Privacy Policy', href: '/privacy-policy' },
+                { label: 'Shipping Policy', href: '/shipping-policy' },
+                { label: 'Returns & Refund Policy', href: '/return-and-refund' },
+                { label: 'Law of Jurisdiction', href: '/law-of-jurisdiction' },
+              ].map((item) => (
+                <li key={item.label}>
                   <a
-                    href={`/${label.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={item.href}
                     className="text-[#B0B0B0] text-sm hover:text-[#E5E5E5] transition-colors"
                   >
-                    {label}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -50,7 +56,7 @@ function Footer() {
               SUPPORT
             </h3>
             <ul className="list-none p-0 m-0 space-y-2">
-              {['Contact Us', 'Track Order', 'Return & Refund', 'Terms & Condition'].map((label) => (
+              {['Contact Us', 'Track Order'].map((label) => (
                 <li key={label}>
                   <a
                     href={`/${label.toLowerCase().replace(/\s+/g, '-').replace('&', 'and')}`}

@@ -16,6 +16,9 @@ import ContactPage from './pages/ContactPage'
 import TrackOrderPage from './pages/TrackOrderPage'
 import ReturnsRefundPage from './pages/ReturnsRefundPage'
 import TermsConditionsPage from './pages/TermsConditionsPage'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import ShippingPolicyPage from './pages/ShippingPolicyPage'
+import LawOfJurisdictionPage from './pages/LawOfJurisdictionPage'
 import './App.css'
 
 function App() {
@@ -38,6 +41,9 @@ function App() {
           <Route path="/track-order" element={<TrackOrderPage />} />
           <Route path="/return-and-refund" element={<ReturnsRefundPage />} />
           <Route path="/terms-and-condition" element={<TermsConditionsPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+          <Route path="/law-of-jurisdiction" element={<LawOfJurisdictionPage />} />
           <Route path="/adminlogin/101/*" element={<AdminLoginPage />} />
         </Routes>
       </div>
