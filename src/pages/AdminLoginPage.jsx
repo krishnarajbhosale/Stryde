@@ -7,6 +7,7 @@ import AdminOrders from '../components/admin/AdminOrders'
 import AdminWallet from '../components/admin/AdminWallet'
 import AdminReturns from '../components/admin/AdminReturns'
 import AdminPromoCodes from '../components/admin/AdminPromoCodes'
+import AdminTracking from '../components/admin/AdminTracking'
 
 const inputClass =
   'w-full bg-black border border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 px-3 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide'
@@ -96,6 +97,9 @@ function AdminNavbar({ onLogout }) {
         <Link to={`${base}/promocodes`} className={linkClass(`${base}/promocodes`)}>
           Promo Codes
         </Link>
+        <Link to={`${base}/tracking`} className={linkClass(`${base}/tracking`)}>
+          Tracking
+        </Link>
       </div>
       <button
         type="button"
@@ -169,6 +173,7 @@ export default function AdminLoginPage() {
           <Route path="wallet" element={<AdminWallet />} />
           <Route path="returns" element={<AdminReturns />} />
           <Route path="promocodes" element={<AdminPromoCodes />} />
+          <Route path="tracking" element={<AdminTracking />} />
         </Routes>
       </main>
     </div>

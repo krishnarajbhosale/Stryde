@@ -10,8 +10,12 @@ export async function requestCustomerOtp(email) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   })
-  const data = await res.json()
-  if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send OTP')
+  const text = await res.text().catch(() => '')
+  let data = {}
+  try { data = text ? JSON.parse(text) : {} } catch { data = {} }
+  if (!res.ok || data.success === false) {
+    throw new Error(data.message || text || 'Failed to send OTP')
+  }
   return data
 }
 
@@ -21,8 +25,10 @@ export async function verifyCustomerOtp(email, otp) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, otp }),
   })
-  const data = await res.json()
-  if (!res.ok || !data.success || !data.token) throw new Error(data.message || 'Invalid OTP')
+  const text = await res.text().catch(() => '')
+  let data = {}
+  try { data = text ? JSON.parse(text) : {} } catch { data = {} }
+  if (!res.ok || !data.success || !data.token) throw new Error(data.message || text || 'Invalid OTP')
   localStorage.setItem('customerToken', data.token)
   localStorage.setItem('customerEmail', String(email || '').trim().toLowerCase())
   return data

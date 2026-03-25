@@ -332,6 +332,13 @@ public class OrderService {
         dto.setShippingAddress(order.getShippingAddress());
         dto.setCity(order.getCity());
         dto.setPinCode(order.getPinCode());
+        dto.setGstNumber(order.getGstNumber());
+        dto.setPromoCode(order.getPromoCode());
+        dto.setPromoDiscount(order.getPromoDiscount());
+        dto.setShippingFee(order.getShippingFee());
+        dto.setCodCharge(order.getCodCharge());
+        dto.setGstAmount(order.getGstAmount());
+        dto.setAwbNumber(order.getAwbNumber());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
         dto.setCreatedAt(order.getCreatedAt());

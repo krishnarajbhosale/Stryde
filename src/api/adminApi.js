@@ -207,3 +207,21 @@ export async function getCustomSizeById(id) {
   if (!res.ok) throw new Error('Failed to fetch custom size')
   return res.json()
 }
+
+export async function getTrackingOrder(orderId) {
+  const res = await fetch(`${API_BASE}/tracking/orders/${orderId}`, { headers: getAuthHeaders() })
+  if (res.status === 404) throw new Error('Order not found')
+  if (!res.ok) throw new Error('Failed to fetch order')
+  return res.json()
+}
+
+export async function setTrackingAwb(orderId, awbNumber) {
+  const res = await fetch(`${API_BASE}/tracking/orders/${orderId}/awb`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ awbNumber }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || data.success === false) throw new Error(data.message || 'Failed to save AWB')
+  return data
+}

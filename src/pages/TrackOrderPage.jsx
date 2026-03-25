@@ -199,6 +199,20 @@ function TrackOrderPage() {
                       <p className="text-sm uppercase text-[#D1C7B7]">{o.orderNumber}</p>
                       <p className="text-xs text-[#E5E5E5]/70 mt-1">Status: {o.status}</p>
                       <p className="text-xs text-[#E5E5E5]/70">Total: Rs. {o.totalAmount}</p>
+                      <p className="text-xs text-[#E5E5E5]/70 mt-1">
+                        AWB: {o.awbNumber ? o.awbNumber : '—'}
+                        {' '}
+                        {o.awbNumber && (
+                          <a
+                            href="https://www.dtdc.in/trace.asp"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[#D1C7B7] underline underline-offset-2 ml-2"
+                          >
+                            Track on DTDC
+                          </a>
+                        )}
+                      </p>
                       <div className="mt-2 space-y-1">
                         {(o.items || []).map((it, idx) => (
                           <p key={`${o.id}-${idx}`} className="text-xs text-[#E5E5E5]/80">

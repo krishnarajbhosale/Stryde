@@ -1,6 +1,7 @@
 package com.strydeeva.controller;
 
 import com.strydeeva.service.CustomerAuthService;
+import com.strydeeva.service.EmailNotificationService;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +14,11 @@ import java.util.Map;
 public class CustomerAuthController {
 
     private final CustomerAuthService customerAuthService;
+    private final EmailNotificationService emailNotificationService;
 
-    public CustomerAuthController(CustomerAuthService customerAuthService) {
+    public CustomerAuthController(CustomerAuthService customerAuthService, EmailNotificationService emailNotificationService) {
         this.customerAuthService = customerAuthService;
+        this.emailNotificationService = emailNotificationService;
     }
 
     public static class RequestOtpDto {
@@ -39,18 +42,35 @@ public class CustomerAuthController {
     }
 
     @PostMapping("/request-otp")
-    public ResponseEntity<Map<String, Object>> requestOtp(@RequestBody RequestOtpDto request) {
+    public ResponseEntity<Map<String, Object>> requestOtp(@jakarta.validation.Valid @RequestBody(required = false) RequestOtpDto request) {
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Email is required"
+            ));
+        }
         String otp = customerAuthService.createAndStoreOtp(request.getEmail());
-        // TODO: integrate real email delivery provider here.
+        boolean sent = emailNotificationService.sendOtpEmail(request.getEmail(), otp);
+        if (!sent) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "OTP could not be sent. Email (SMTP) is not configured on server."
+            ));
+        }
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "OTP generated. Use the 6-digit code sent to your email.",
-                "devOtp", otp
+                "message", "A 6-digit OTP has been sent to your email."
         ));
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, Object>> verifyOtp(@RequestBody VerifyOtpDto request) {
+    public ResponseEntity<Map<String, Object>> verifyOtp(@jakarta.validation.Valid @RequestBody(required = false) VerifyOtpDto request) {
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank() || request.getOtp() == null || request.getOtp().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Email and OTP are required"
+            ));
+        }
         String token = customerAuthService.verifyOtpAndCreateToken(request.getEmail(), request.getOtp());
         if (token == null) {
             return ResponseEntity.status(401).body(Map.of(

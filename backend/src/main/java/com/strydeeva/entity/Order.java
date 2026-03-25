@@ -69,6 +69,9 @@ public class Order {
     @Column(name = "payment_txn_id", length = 80)
     private String paymentTxnId;
 
+    @Column(name = "awb_number", length = 80)
+    private String awbNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private OrderStatus status = OrderStatus.PENDING;
@@ -123,6 +126,8 @@ public class Order {
     public void setPaymentProvider(String paymentProvider) { this.paymentProvider = paymentProvider; }
     public String getPaymentTxnId() { return paymentTxnId; }
     public void setPaymentTxnId(String paymentTxnId) { this.paymentTxnId = paymentTxnId; }
+    public String getAwbNumber() { return awbNumber; }
+    public void setAwbNumber(String awbNumber) { this.awbNumber = awbNumber; }
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

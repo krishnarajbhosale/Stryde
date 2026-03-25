@@ -21,6 +21,7 @@ public class OrderResponseDto {
     private BigDecimal codCharge;
     private BigDecimal gstAmount;
     private BigDecimal totalAmount;
+    private String awbNumber;
     private String invoiceToken;
     private String status;
     private Instant createdAt;
@@ -85,6 +86,8 @@ public class OrderResponseDto {
     public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public String getAwbNumber() { return awbNumber; }
+    public void setAwbNumber(String awbNumber) { this.awbNumber = awbNumber; }
     public String getInvoiceToken() { return invoiceToken; }
     public void setInvoiceToken(String invoiceToken) { this.invoiceToken = invoiceToken; }
     public String getStatus() { return status; }

@@ -7,6 +7,8 @@ const inputUnderline =
 
 function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const [status, setStatus] = useState({ type: '', message: '' })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -17,9 +19,32 @@ function ContactPage() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Hook into backend or email service later
+    setSubmitting(true)
+    setStatus({ type: '', message: '' })
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message,
+        }),
+      })
+      const text = await res.text().catch(() => '')
+      let data = {}
+      try { data = text ? JSON.parse(text) : {} } catch { data = {} }
+      if (!res.ok || data.success === false) throw new Error(data.message || text || 'Failed to send message')
+      setStatus({ type: 'success', message: 'Message sent. We will get back to you soon.' })
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message || 'Failed to send message' })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -96,10 +121,16 @@ function ContactPage() {
 
               <button
                 type="submit"
+                disabled={submitting}
                 className="inline-flex items-center justify-center px-8 py-3.5 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 transition-colors"
               >
-                Submit
+                {submitting ? 'Sending…' : 'Submit'}
               </button>
+              {status.message && (
+                <p className={`text-xs mt-2 ${status.type === 'error' ? 'text-red-400' : 'text-[#D1C7B7]'}`}>
+                  {status.message}
+                </p>
+              )}
             </form>
 
             <div className="space-y-6 text-sm text-[#E5E5E5]/80">
