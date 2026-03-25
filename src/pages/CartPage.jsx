@@ -5,15 +5,21 @@ import Footer from '../components/Footer'
 import ProductCard from '../components/ProductCard'
 import { useCart } from '../context/CartContext'
 import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
+import { validatePromoCode } from '../api/promoApi'
 
 const DISCOUNT_PER_ORDER = 0
 const GST_RATE = 0.12
+const SHIPPING_FEE = 200
 
 function CartPage() {
   const navigate = useNavigate()
-  const { cart, removeFromCart, updateQuantity, updateSize } = useCart()
+  const { cart, promo, setPromo, removeFromCart, updateQuantity, updateSize } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [promoInput, setPromoInput] = useState(promo?.code || '')
+  const [promoMessage, setPromoMessage] = useState('')
+  const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -38,12 +44,85 @@ function CartPage() {
   const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const subtotal = totalMRP - discount
-  const gstAmount = Math.round(subtotal * GST_RATE)
-  const totalAmount = subtotal + gstAmount
+  const promoDiscount = promo?.discountAmount ? Number(promo.discountAmount) : 0
+  const discountedSubtotal = Math.max(0, subtotal - promoDiscount)
+  const gstAmount = Math.round(discountedSubtotal * GST_RATE)
+  const shippingFee = cartItemsWithProduct.length > 0 ? SHIPPING_FEE : 0
+  const totalAmount = discountedSubtotal + gstAmount + shippingFee
 
   const similarProducts = (loading || cartItemsWithProduct.length === 0)
     ? products.slice(0, 3)
     : products.filter((p) => String(p.id) !== String(cartItemsWithProduct[0].productId)).slice(0, 3)
+
+  // Re-validate applied promo whenever base cart value changes
+  useEffect(() => {
+    if (!promo?.code) return
+    if (cartItemsWithProduct.length === 0) {
+      setPromo(null)
+      return
+    }
+    let cancelled = false
+    const t = setTimeout(async () => {
+      try {
+        const res = await validatePromoCode(promo.code, subtotal)
+        if (cancelled) return
+        if (!res.valid) {
+          setPromo(null)
+          setPromoMessage('')
+          setPromoError(res.message || 'Promo removed')
+          return
+        }
+        setPromo((prev) => ({
+          ...(prev || {}),
+          code: res.code,
+          percentOff: res.percentOff,
+          minOrderValue: res.minOrderValue,
+          maxDiscount: res.maxDiscount,
+          discountAmount: res.discountAmount,
+        }))
+      } catch {
+        // If validation fails (server down), keep existing promo value
+      }
+    }, 300)
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [promo?.code, subtotal, cartItemsWithProduct.length, setPromo])
+
+  const applyPromo = async () => {
+    setPromoLoading(true)
+    setPromoMessage('')
+    setPromoError('')
+    try {
+      const res = await validatePromoCode(promoInput, subtotal)
+      if (!res.valid) {
+        setPromo(null)
+        setPromoError(res.message || 'Invalid promo code')
+        return
+      }
+      setPromo({
+        code: res.code,
+        percentOff: res.percentOff,
+        minOrderValue: res.minOrderValue,
+        maxDiscount: res.maxDiscount,
+        discountAmount: res.discountAmount,
+      })
+      setPromoMessage('Promo applied')
+    } catch (e) {
+      setPromo(null)
+      setPromoError(e.message || 'Failed to apply promo')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const removePromo = () => {
+    setPromo(null)
+    setPromoInput('')
+    setPromoMessage('')
+    setPromoError('')
+  }
 
   return (
     <>
@@ -155,6 +234,40 @@ function CartPage() {
               <h2 className="text-sm font-medium tracking-wide uppercase text-[#D1C7B7] mb-6">
                 BILLING
               </h2>
+              <div className="mb-6 border border-[#D1C7B7]/30 p-3">
+                <p className="text-xs uppercase tracking-wide text-[#D1C7B7] mb-2">Promo code</p>
+                {promo?.code ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-[#D1C7B7]">{promo.code}</p>
+                    <button
+                      type="button"
+                      onClick={removePromo}
+                      className="text-xs uppercase border border-[#D1C7B7] text-[#D1C7B7] px-3 py-1.5"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 bg-black border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyPromo}
+                      disabled={!promoInput.trim() || promoLoading}
+                      className="px-4 py-2 text-sm uppercase bg-[#D1C7B7] text-[#1a1a1a] disabled:opacity-50"
+                    >
+                      {promoLoading ? 'Applying…' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {promoMessage && <p className="text-xs text-[#D1C7B7]/80 mt-2">{promoMessage}</p>}
+                {promoError && <p className="text-xs text-red-400 mt-2">{promoError}</p>}
+              </div>
               <div className="space-y-3">
                 <p className="text-xs uppercase tracking-wide text-[#D1C7B7] mb-3">
                   PRICE DETAILS :
@@ -173,9 +286,19 @@ function CartPage() {
                     <span>- ₹{discount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
+                {promoDiscount > 0 && promo?.code && (
+                  <div className="flex justify-between text-sm text-[#D1C7B7]">
+                    <span>PROMO ({promo.code})</span>
+                    <span>- ₹{Number(promoDiscount).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
                   <span>GST (12%)</span>
                   <span>₹{gstAmount.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-sm text-[#D1C7B7]">
+                  <span>Shipping</span>
+                  <span>₹{shippingFee.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="h-px bg-[#D1C7B7]/30 my-4" />
                 <div className="flex justify-between text-base font-medium text-[#D1C7B7]">

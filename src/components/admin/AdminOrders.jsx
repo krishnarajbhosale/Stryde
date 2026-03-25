@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { getOrders, downloadOrdersExcel, getCustomSizeById } from '../../api/adminApi'
+import { getOrders, downloadOrdersExcel, downloadOrderInvoicePdf, getCustomSizeById } from '../../api/adminApi'
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloading, setDownloading] = useState(false)
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [selectedCustomSize, setSelectedCustomSize] = useState(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
@@ -57,6 +58,19 @@ export default function AdminOrders() {
       setError(e.message || 'Download failed')
     } finally {
       setDownloading(false)
+    }
+  }
+
+  const handleDownloadInvoice = async () => {
+    if (!selectedOrder?.id) return
+    setInvoiceDownloading(true)
+    setError('')
+    try {
+      await downloadOrderInvoicePdf(selectedOrder.id, selectedOrder.orderNumber)
+    } catch (e) {
+      setError(e.message || 'Invoice download failed')
+    } finally {
+      setInvoiceDownloading(false)
     }
   }
 
@@ -121,13 +135,33 @@ export default function AdminOrders() {
                       : '—'}
                   </td>
                   <td className="py-3 text-[#E5E5E5]">
-                    <button
-                      type="button"
-                      onClick={() => openOrderDetails(o)}
-                      className="text-xs uppercase py-1 px-2 border border-[#D1C7B7] text-[#D1C7B7] hover:bg-[#D1C7B7]/10"
-                    >
-                      View
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openOrderDetails(o)}
+                        className="text-xs uppercase py-1 px-2 border border-[#D1C7B7] text-[#D1C7B7] hover:bg-[#D1C7B7]/10"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setInvoiceDownloading(true)
+                          setError('')
+                          try {
+                            await downloadOrderInvoicePdf(o.id, o.orderNumber)
+                          } catch (e) {
+                            setError(e.message || 'Invoice download failed')
+                          } finally {
+                            setInvoiceDownloading(false)
+                          }
+                        }}
+                        disabled={invoiceDownloading}
+                        className="text-xs uppercase py-1 px-2 border border-[#D1C7B7]/70 text-[#D1C7B7]/90 hover:bg-[#D1C7B7]/10 disabled:opacity-50"
+                      >
+                        Invoice
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -143,13 +177,23 @@ export default function AdminOrders() {
               <h3 className="text-sm font-semibold uppercase tracking-wide text-[#E5E5E5]">
                 Order Details #{selectedOrder.orderNumber || selectedOrder.id}
               </h3>
-              <button
-                type="button"
-                onClick={closeOrderDetails}
-                className="text-[#E5E5E5] hover:opacity-80 text-lg leading-none px-2"
-              >
-                ×
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadInvoice}
+                  disabled={invoiceDownloading}
+                  className="text-xs uppercase py-1 px-2 border border-[#D1C7B7] text-[#D1C7B7] hover:bg-[#D1C7B7]/10 disabled:opacity-50"
+                >
+                  {invoiceDownloading ? 'Downloading…' : 'Download Invoice'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeOrderDetails}
+                  className="text-[#E5E5E5] hover:opacity-80 text-lg leading-none px-2"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <div className="p-4 space-y-4 text-sm text-[#E5E5E5]/90">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

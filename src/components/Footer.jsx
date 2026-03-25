@@ -66,6 +66,11 @@ function Footer() {
                   </a>
                 </li>
               ))}
+              <li>
+                <a href="/return-exchange" className="text-[#B0B0B0] text-sm hover:text-[#E5E5E5] transition-colors">
+                  Return / Exchange Request
+                </a>
+              </li>
             </ul>
           </div>
 

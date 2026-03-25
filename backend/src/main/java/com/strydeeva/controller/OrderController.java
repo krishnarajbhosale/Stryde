@@ -22,4 +22,11 @@ public class OrderController {
         OrderResponseDto order = orderService.createOrder(request);
         return ResponseEntity.status(201).body(order);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> myOrders(jakarta.servlet.http.HttpServletRequest request) {
+        Long customerId = (Long) request.getAttribute("customerId");
+        String email = (String) request.getAttribute("customerEmail");
+        return ResponseEntity.ok(orderService.getOrdersForCustomerId(customerId, email));
+    }
 }

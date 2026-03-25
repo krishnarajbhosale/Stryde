@@ -15,7 +15,13 @@ public class OrderResponseDto {
     private String city;
     private String pinCode;
     private String gstNumber;
+    private String promoCode;
+    private BigDecimal promoDiscount;
+    private BigDecimal shippingFee;
+    private BigDecimal codCharge;
+    private BigDecimal gstAmount;
     private BigDecimal totalAmount;
+    private String invoiceToken;
     private String status;
     private Instant createdAt;
     private List<OrderItemDto> items = new ArrayList<>();
@@ -67,8 +73,20 @@ public class OrderResponseDto {
     public void setPinCode(String pinCode) { this.pinCode = pinCode; }
     public String getGstNumber() { return gstNumber; }
     public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
+    public String getPromoCode() { return promoCode; }
+    public void setPromoCode(String promoCode) { this.promoCode = promoCode; }
+    public BigDecimal getPromoDiscount() { return promoDiscount; }
+    public void setPromoDiscount(BigDecimal promoDiscount) { this.promoDiscount = promoDiscount; }
+    public BigDecimal getShippingFee() { return shippingFee; }
+    public void setShippingFee(BigDecimal shippingFee) { this.shippingFee = shippingFee; }
+    public BigDecimal getCodCharge() { return codCharge; }
+    public void setCodCharge(BigDecimal codCharge) { this.codCharge = codCharge; }
+    public BigDecimal getGstAmount() { return gstAmount; }
+    public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public String getInvoiceToken() { return invoiceToken; }
+    public void setInvoiceToken(String invoiceToken) { this.invoiceToken = invoiceToken; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

@@ -4,6 +4,10 @@
 
 const API_BASE = '/api/orders'
 
+function getCustomerToken() {
+  return localStorage.getItem('customerToken') || ''
+}
+
 /**
  * @param {{
  *   customerEmail: string
@@ -37,5 +41,15 @@ export async function createOrder(payload) {
     }
     throw new Error(message)
   }
+  return res.json()
+}
+
+export async function getMyOrders() {
+  const token = getCustomerToken()
+  const res = await fetch(`${API_BASE}/me`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (res.status === 401) throw new Error('Please sign in to view your orders')
+  if (!res.ok) throw new Error('Failed to fetch your orders')
   return res.json()
 }

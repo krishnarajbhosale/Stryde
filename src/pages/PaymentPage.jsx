@@ -5,9 +5,13 @@ import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
 import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 import { createOrder } from '../api/ordersApi'
+import { isCustomerLoggedIn, requestCustomerOtp, verifyCustomerOtp } from '../api/customerAuthApi'
+import { initiateEasebuzzPayment } from '../api/easebuzzApi'
 
 const DISCOUNT_PER_ORDER = 0
 const GST_RATE = 0.12
+const SHIPPING_FEE = 200
+const COD_CHARGE = 250
 
 const ALL_PAYMENT_OPTIONS = [
   { id: 'cod', label: 'CASH ON DELIVERY' },
@@ -19,13 +23,21 @@ const ALL_PAYMENT_OPTIONS = [
 function PaymentPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { cart, removeFromCart, clearCart } = useCart()
+  const { cart, promo, removeFromCart, clearCart } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const checkoutForm = location.state?.checkoutForm
+
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authStep, setAuthStep] = useState('email')
+  const [authEmail, setAuthEmail] = useState(localStorage.getItem('customerEmail') || checkoutForm?.email || '')
+  const [authOtp, setAuthOtp] = useState('')
+  const [authMessage, setAuthMessage] = useState('')
+  const [authDevOtp, setAuthDevOtp] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -52,8 +64,12 @@ function PaymentPage() {
   const totalMRPStrikethrough = totalMRP + PRICE_ADD_ON * totalQty
   const discount = cartItemsWithProduct.length > 0 ? DISCOUNT_PER_ORDER : 0
   const subtotal = totalMRP - discount
-  const gstAmount = Math.round(subtotal * GST_RATE)
-  const totalAmount = subtotal + gstAmount
+  const promoDiscount = promo?.discountAmount ? Number(promo.discountAmount) : 0
+  const discountedSubtotal = Math.max(0, subtotal - promoDiscount)
+  const gstAmount = Math.round(discountedSubtotal * GST_RATE)
+  const shippingFee = cartItemsWithProduct.length > 0 ? SHIPPING_FEE : 0
+  const codCharge = paymentMethod === 'cod' ? COD_CHARGE : 0
+  const totalAmount = discountedSubtotal + gstAmount + shippingFee + codCharge
 
   useEffect(() => {
     if (cart.length === 0) navigate('/cart', { replace: true })
@@ -65,8 +81,52 @@ function PaymentPage() {
     }
   }, [loading, cart.length, checkoutForm, navigate])
 
+  useEffect(() => {
+    if (!isCustomerLoggedIn() && cart.length > 0) {
+      setAuthOpen(true)
+      setAuthStep('email')
+    }
+  }, [cart.length])
+
+  const handleRequestOtp = async (e) => {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthMessage('')
+    try {
+      const data = await requestCustomerOtp(authEmail.trim())
+      setAuthStep('otp')
+      setAuthDevOtp(data.devOtp || '')
+      setAuthMessage('A 6-digit code has been sent to your email.')
+    } catch (err) {
+      setAuthMessage(err.message || 'Failed to send OTP')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthMessage('')
+    try {
+      await verifyCustomerOtp(authEmail.trim(), authOtp.trim())
+      setAuthOpen(false)
+      setAuthOtp('')
+      setAuthDevOtp('')
+    } catch (err) {
+      setAuthMessage(err.message || 'Invalid OTP')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault()
+    if (!isCustomerLoggedIn()) {
+      setAuthOpen(true)
+      setAuthStep('email')
+      return
+    }
     if (!paymentMethod || cartItemsWithProduct.length === 0 || !checkoutForm) return
     setSubmitting(true)
     setSubmitError('')
@@ -80,6 +140,11 @@ function PaymentPage() {
         city: String(checkoutForm.city || '').trim(),
         pinCode: String(checkoutForm.pinCode || '').trim(),
         gstNumber: String(checkoutForm.gstNumber || '').trim(),
+        promoCode: promo?.code || '',
+        promoDiscount: Number(promoDiscount || 0),
+        shippingFee: Number(shippingFee || 0),
+        codCharge: Number(codCharge || 0),
+        gstAmount: Number(gstAmount || 0),
         totalAmount: Number(totalAmount),
         items: cartItemsWithProduct.map((item) => {
           const obj = {
@@ -93,9 +158,50 @@ function PaymentPage() {
           return obj
         }),
       }
-      const order = await createOrder(payload)
-      clearCart()
-      navigate('/order-success', { state: { orderNumber: order.orderNumber, orderId: order.id } })
+
+      if (paymentMethod === 'cod') {
+        const order = await createOrder(payload)
+
+        // Download invoice immediately (more reliable than triggering from OrderSuccessPage)
+        if (order?.id && order?.invoiceToken) {
+          try {
+            const res = await fetch(`/api/orders/${order.id}/invoice.pdf?token=${encodeURIComponent(order.invoiceToken)}`)
+            if (res.ok) {
+              const blob = await res.blob()
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `invoice-${order.orderNumber || order.id}.pdf`
+              document.body.appendChild(a)
+              a.click()
+              a.remove()
+              URL.revokeObjectURL(url)
+            }
+          } catch {
+            // ignore invoice download errors here; user can download again on success page
+          }
+        }
+
+        clearCart()
+        navigate('/order-success', { state: { orderNumber: order.orderNumber, orderId: order.id, invoiceToken: order.invoiceToken } })
+        return
+      }
+
+      // Online payment via Easebuzz: create pending order and redirect to gateway
+      const init = await initiateEasebuzzPayment(payload, paymentMethod)
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = init.paymentUrl
+      const fields = init.fields || {}
+      Object.keys(fields).forEach((k) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = k
+        input.value = String(fields[k] ?? '')
+        form.appendChild(input)
+      })
+      document.body.appendChild(form)
+      form.submit()
     } catch (err) {
       setSubmitError(err.message || 'Failed to place order. Please try again.')
     } finally {
@@ -174,9 +280,23 @@ function PaymentPage() {
             <span>- ₹{discount.toLocaleString('en-IN')}</span>
           </div>
         )}
+        {promoDiscount > 0 && promo?.code && (
+          <div className="flex justify-between">
+            <span>PROMO ({promo.code})</span>
+            <span>- ₹{Number(promoDiscount).toLocaleString('en-IN')}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>GST (12%)</span>
           <span>₹{gstAmount.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Shipping</span>
+          <span>₹{shippingFee.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>COD Charges</span>
+          <span>{codCharge ? `₹${codCharge.toLocaleString('en-IN')}` : '—'}</span>
         </div>
       </div>
       <div className="h-px bg-[#E5E5E5]/20 my-4" />
@@ -211,7 +331,12 @@ function PaymentPage() {
                 className="sr-only peer"
                 aria-label={opt.label}
               />
-              <span className="block w-4 h-4 rounded border-2 border-[#E5E5E5]/70 bg-transparent peer-focus:ring-2 peer-focus:ring-[#D1C7B7]/50 group-has-[:checked]:border-[#D1C7B7] group-has-[:checked]:bg-[#D1C7B7]/20" aria-hidden />
+              <span
+                className="block w-4 h-4 rounded border-2 border-[#E5E5E5]/70 bg-transparent peer-focus:ring-2 peer-focus:ring-[#D1C7B7]/50 peer-checked:border-[#D4AF37] peer-checked:bg-[#D4AF37]/20 flex items-center justify-center"
+                aria-hidden
+              >
+                <span className="w-2 h-2 rounded-sm bg-[#D4AF37] opacity-0 peer-checked:opacity-100 transition-opacity" />
+              </span>
             </span>
             <span className="text-xs md:text-sm text-[#E5E5E5] uppercase tracking-wide group-hover:text-[#D1C7B7] transition-colors">
               {opt.label}
@@ -292,6 +417,85 @@ function PaymentPage() {
         </div>
       </div>
       <Footer />
+
+      {authOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+          <div className="w-full max-w-md bg-[#111] border border-[#E5E5E5]/30 rounded shadow-xl">
+            <div className="px-4 py-3 border-b border-[#E5E5E5]/20 flex items-center justify-between">
+              <p className="text-sm uppercase tracking-wide text-[#E5E5E5]">Sign in to place order</p>
+              <button
+                type="button"
+                onClick={() => setAuthOpen(false)}
+                className="text-[#E5E5E5] text-lg leading-none px-2"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-[#E5E5E5]/70 mb-4">
+                Please sign in with your email to place an order. This ensures your orders, wallet and returns are linked to your account.
+              </p>
+
+              {authStep === 'email' && (
+                <form onSubmit={handleRequestOtp} className="space-y-4">
+                  <input
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="Email"
+                    className="w-full bg-transparent border-0 border-b border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide"
+                    required
+                  />
+                  {authMessage && <p className="text-xs text-[#E5E5E5]/80">{authMessage}</p>}
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 disabled:opacity-60"
+                  >
+                    {authLoading ? 'Sending…' : 'Send 6-digit code'}
+                  </button>
+                </form>
+              )}
+
+              {authStep === 'otp' && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <input
+                    type="text"
+                    value={authOtp}
+                    onChange={(e) => setAuthOtp(e.target.value.replace(/\\D/g, '').slice(0, 6))}
+                    placeholder="6-digit code"
+                    className="w-full bg-transparent border-0 border-b border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide"
+                    required
+                  />
+                  {authMessage && <p className="text-xs text-[#E5E5E5]/80">{authMessage}</p>}
+                  {authDevOtp && (
+                    <p className="text-xs text-[#D1C7B7]/90">
+                      Dev code: <span className="font-mono">{authDevOtp}</span>
+                    </p>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="flex-1 py-3 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 disabled:opacity-60"
+                    >
+                      {authLoading ? 'Verifying…' : 'Verify'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAuthStep('email'); setAuthOtp(''); setAuthMessage('') }}
+                      className="flex-1 py-3 text-sm font-medium tracking-wide uppercase border border-[#D1C7B7] text-[#D1C7B7]"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

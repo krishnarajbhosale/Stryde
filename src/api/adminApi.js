@@ -134,6 +134,42 @@ export async function getOrders(status = 'CONFIRMED') {
   return res.json()
 }
 
+export async function getPromoCodes() {
+  const res = await fetch(`${API_BASE}/promocodes`, { headers: getAuthHeaders() })
+  if (!res.ok) throw new Error('Failed to fetch promo codes')
+  return res.json()
+}
+
+export async function createPromoCode(body) {
+  const res = await fetch(`${API_BASE}/promocodes`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || data.success === false) throw new Error(data.message || 'Failed to create promo code')
+  return data
+}
+
+export async function deletePromoCode(id) {
+  const res = await fetch(`${API_BASE}/promocodes/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to delete promo code')
+  return res.json().catch(() => ({}))
+}
+
+export async function getReturnRequests() {
+  const res = await fetch(`${API_BASE}/returns`, { headers: getAuthHeaders() })
+  if (!res.ok) throw new Error('Failed to fetch return requests')
+  return res.json()
+}
+
+export function getReturnVideoUrl(id) {
+  return `${API_BASE}/returns/${id}/video`
+}
+
 export async function downloadOrdersExcel() {
   const token = localStorage.getItem('adminToken')
   const res = await fetch(`${API_BASE}/orders/export/excel`, {
@@ -145,6 +181,21 @@ export async function downloadOrdersExcel() {
   const a = document.createElement('a')
   a.href = url
   a.download = 'confirmed_orders.xlsx'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export async function downloadOrderInvoicePdf(orderId, orderNumber) {
+  const token = localStorage.getItem('adminToken')
+  const res = await fetch(`${API_BASE}/orders/${orderId}/invoice.pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new Error('Failed to download invoice')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `invoice-${orderNumber || orderId}.pdf`
   a.click()
   URL.revokeObjectURL(url)
 }

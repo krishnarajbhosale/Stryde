@@ -43,6 +43,7 @@ function cartReducer(state, action) {
 
 export function CartProvider({ children }) {
   const [cart, dispatch] = useReducer(cartReducer, [])
+  const [promo, setPromo] = useState(null)
   const [showAddedToCart, setShowAddedToCart] = useState(false)
 
   const addToCart = useCallback((productId, size = 'M', customSizeId = null) => {
@@ -67,11 +68,23 @@ export function CartProvider({ children }) {
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR' })
+    setPromo(null)
   }
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, updateSize, clearCart, showAddedToCart, dismissAddedToCart }}
+      value={{
+        cart,
+        promo,
+        setPromo,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        updateSize,
+        clearCart,
+        showAddedToCart,
+        dismissAddedToCart,
+      }}
     >
       {children}
     </CartContext.Provider>

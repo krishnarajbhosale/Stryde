@@ -39,8 +39,35 @@ public class Order {
     @Column(name = "gst_number", length = 50)
     private String gstNumber;
 
+    @Column(name = "customer_id")
+    private Long customerId;
+
     @Column(name = "total_amount", precision = 12, scale = 2)
     private BigDecimal totalAmount;
+
+    @Column(name = "promo_code", length = 60)
+    private String promoCode;
+
+    @Column(name = "promo_discount", precision = 12, scale = 2)
+    private BigDecimal promoDiscount;
+
+    @Column(name = "shipping_fee", precision = 12, scale = 2)
+    private BigDecimal shippingFee;
+
+    @Column(name = "cod_charge", precision = 12, scale = 2)
+    private BigDecimal codCharge;
+
+    @Column(name = "gst_amount", precision = 12, scale = 2)
+    private BigDecimal gstAmount;
+
+    @Column(name = "payment_method", length = 30)
+    private String paymentMethod;
+
+    @Column(name = "payment_provider", length = 30)
+    private String paymentProvider;
+
+    @Column(name = "payment_txn_id", length = 80)
+    private String paymentTxnId;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -76,8 +103,26 @@ public class Order {
     public void setPinCode(String pinCode) { this.pinCode = pinCode; }
     public String getGstNumber() { return gstNumber; }
     public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public String getPromoCode() { return promoCode; }
+    public void setPromoCode(String promoCode) { this.promoCode = promoCode; }
+    public BigDecimal getPromoDiscount() { return promoDiscount; }
+    public void setPromoDiscount(BigDecimal promoDiscount) { this.promoDiscount = promoDiscount; }
+    public BigDecimal getShippingFee() { return shippingFee; }
+    public void setShippingFee(BigDecimal shippingFee) { this.shippingFee = shippingFee; }
+    public BigDecimal getCodCharge() { return codCharge; }
+    public void setCodCharge(BigDecimal codCharge) { this.codCharge = codCharge; }
+    public BigDecimal getGstAmount() { return gstAmount; }
+    public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public String getPaymentProvider() { return paymentProvider; }
+    public void setPaymentProvider(String paymentProvider) { this.paymentProvider = paymentProvider; }
+    public String getPaymentTxnId() { return paymentTxnId; }
+    public void setPaymentTxnId(String paymentTxnId) { this.paymentTxnId = paymentTxnId; }
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

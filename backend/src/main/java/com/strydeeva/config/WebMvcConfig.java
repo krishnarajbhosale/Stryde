@@ -8,9 +8,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final AdminAuthInterceptor adminAuthInterceptor;
+    private final CustomerAuthInterceptor customerAuthInterceptor;
 
-    public WebMvcConfig(AdminAuthInterceptor adminAuthInterceptor) {
+    public WebMvcConfig(AdminAuthInterceptor adminAuthInterceptor, CustomerAuthInterceptor customerAuthInterceptor) {
         this.adminAuthInterceptor = adminAuthInterceptor;
+        this.customerAuthInterceptor = customerAuthInterceptor;
     }
 
     @Override
@@ -18,5 +20,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(adminAuthInterceptor)
             .addPathPatterns("/api/admin/**")
             .excludePathPatterns("/api/admin/login");
+
+        registry.addInterceptor(customerAuthInterceptor)
+            .addPathPatterns("/api/orders/me", "/api/wallet/me");
     }
 }

@@ -131,7 +131,7 @@ function Navbar() {
           </Link>
         </div>
 
-        {/* Right: Search bar + Cart */}
+        {/* Right: Search bar + Account + Cart */}
         <div className="flex items-center gap-1 min-w-0 md:min-w-[140px] justify-end" ref={searchBarRef}>
           {searchOpen ? (
             <div className="relative flex-1 max-w-[200px] md:max-w-[280px]">
@@ -209,6 +209,16 @@ function Navbar() {
               </svg>
             </button>
           )}
+        <Link
+          to="/track-order"
+          className="p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"
+          aria-label="My account"
+        >
+          <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round">
+            <path d="M20 21a8 8 0 1 0-16 0" />
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
+          </svg>
+        </Link>
         <Link
           to="/cart"
           className="relative p-2 rounded-md text-[#E5E5E5] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#E5E5E5]/50 transition-colors"

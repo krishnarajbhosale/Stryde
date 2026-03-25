@@ -11,6 +11,7 @@ import AboutPage from './pages/AboutPage'
 import CheckoutPage from './pages/CheckoutPage'
 import PaymentPage from './pages/PaymentPage'
 import OrderSuccessPage from './pages/OrderSuccessPage'
+import PaymentReturnPage from './pages/PaymentReturnPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 import ContactPage from './pages/ContactPage'
 import TrackOrderPage from './pages/TrackOrderPage'
@@ -19,6 +20,7 @@ import TermsConditionsPage from './pages/TermsConditionsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import ShippingPolicyPage from './pages/ShippingPolicyPage'
 import LawOfJurisdictionPage from './pages/LawOfJurisdictionPage'
+import ReturnExchangePage from './pages/ReturnExchangePage'
 import './App.css'
 
 function App() {
@@ -36,9 +38,11 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/payment" element={<PaymentPage />} />
+          <Route path="/payment-return" element={<PaymentReturnPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/contact-us" element={<ContactPage />} />
           <Route path="/track-order" element={<TrackOrderPage />} />
+          <Route path="/return-exchange" element={<ReturnExchangePage />} />
           <Route path="/return-and-refund" element={<ReturnsRefundPage />} />
           <Route path="/terms-and-condition" element={<TermsConditionsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
