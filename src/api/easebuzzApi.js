@@ -4,12 +4,11 @@ export async function initiateEasebuzzPayment(orderPayload, paymentMethod) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ paymentMethod, order: orderPayload }),
   })
+  const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    let msg = 'Failed to start payment'
-    const text = await res.text().catch(() => '')
-    if (text) msg = text
-    throw new Error(msg)
+    const msg = data.error || data.message || 'Failed to start payment'
+    throw new Error(typeof msg === 'string' ? msg : 'Failed to start payment')
   }
-  return res.json()
+  return data
 }
 

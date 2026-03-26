@@ -6,6 +6,8 @@ import com.strydeeva.entity.Order;
 import com.strydeeva.service.EasebuzzService;
 import com.strydeeva.service.OrderService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/payments/easebuzz")
 public class EasebuzzPaymentController {
+
+    private static final Logger log = LoggerFactory.getLogger(EasebuzzPaymentController.class);
 
     private final EasebuzzService easebuzzService;
     private final OrderService orderService;
@@ -62,8 +66,8 @@ public class EasebuzzPaymentController {
                 amount,
                 firstname,
                 email,
-                phone,
-                productinfo,
+                normalizePhoneForEasebuzz(phone),
+                trimProductInfo(productinfo),
                 surl,
                 furl,
                 String.valueOf(order.getId()),
@@ -74,11 +78,24 @@ public class EasebuzzPaymentController {
         );
 
         Map<String, Object> resp = new HashMap<>();
-        resp.put("paymentUrl", easebuzzService.getPaymentUrl());
-        resp.put("fields", fields);
         resp.put("orderId", order.getId());
         resp.put("orderNumber", order.getOrderNumber());
-        return ResponseEntity.ok(resp);
+        try {
+            // Current Easebuzz API: S2S POST → JSON { status:1, data: accessKey } → browser opens /pay/{key}
+            String redirectUrl = easebuzzService.initiateAndGetCheckoutUrl(fields);
+            resp.put("redirectUrl", redirectUrl);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException e) {
+            log.warn("Easebuzz initiate rejected: {}", e.getMessage());
+            resp.clear();
+            resp.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        } catch (Exception e) {
+            log.error("Easebuzz initiate failed", e);
+            resp.clear();
+            resp.put("error", "Payment gateway could not start: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(resp);
+        }
     }
 
     @PostMapping("/success")
@@ -133,6 +150,22 @@ public class EasebuzzPaymentController {
         if (req.getItems().size() == 1) return safe(first);
         return safe(first) + " + " + (req.getItems().size() - 1) + " more";
     }
+
+    /** Easebuzz productinfo max 45 chars (API doc). */
+    private String trimProductInfo(String productinfo) {
+        String s = safe(productinfo);
+        if (s.length() <= 45) return s;
+        return s.substring(0, 45);
+    }
+
+    /** Prefer digits-only phone within 5–20 chars as per Easebuzz pattern. */
+    private String normalizePhoneForEasebuzz(String raw) {
+        String s = safe(raw);
+        String digits = s.replaceAll("\\D", "");
+        if (digits.length() >= 5 && digits.length() <= 20) return digits;
+        return s.length() > 20 ? s.substring(0, 20) : s;
+    }
+
 
     private String fmtAmount(BigDecimal amt) {
         if (amt == null) return "0.00";

@@ -226,8 +226,13 @@ function PaymentPage() {
         return
       }
 
-      // Online payment via Easebuzz: create pending order and redirect to gateway
+      // Online payment: backend S2S initiate → Easebuzz returns access key → open hosted checkout
       const init = await initiateEasebuzzPayment(payload, paymentMethod)
+      if (init.redirectUrl) {
+        window.location.href = init.redirectUrl
+        return
+      }
+      // Legacy: form POST to initiateLink (older docs)
       const form = document.createElement('form')
       form.method = 'POST'
       form.action = init.paymentUrl

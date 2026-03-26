@@ -1,5 +1,7 @@
 package com.strydeeva.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,27 +9,38 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class EasebuzzService {
 
     private static final Logger log = LoggerFactory.getLogger(EasebuzzService.class);
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private final String env;
     private final String key;
     private final String salt;
+    private final String paymentCategory;
 
     public EasebuzzService(
             @Value("${easebuzz.env:prod}") String env,
             @Value("${easebuzz.key}") String key,
-            @Value("${easebuzz.salt}") String salt) {
+            @Value("${easebuzz.salt}") String salt,
+            @Value("${easebuzz.payment-category:NCAP}") String paymentCategory) {
         this.env = env == null ? "prod" : env.trim().toLowerCase();
         this.key = key == null ? "" : key.trim();
         this.salt = salt == null ? "" : salt.trim();
+        this.paymentCategory = paymentCategory == null ? "NCAP" : paymentCategory.trim();
     }
 
     /**
@@ -43,11 +56,81 @@ public class EasebuzzService {
         }
     }
 
-    public String getPaymentUrl() {
-        if ("prod".equals(env) || "production".equals(env) || "live".equals(env)) {
-            return "https://pay.easebuzz.in/payment/initiateLink";
+    public boolean isProductionHost() {
+        return "prod".equals(env) || "production".equals(env) || "live".equals(env);
+    }
+
+    /** Hosted checkout base (no path) — same host family as initiateLink. */
+    public String getPayHostBase() {
+        if (isProductionHost()) {
+            return "https://pay.easebuzz.in";
         }
-        return "https://testpay.easebuzz.in/payment/initiateLink";
+        return "https://testpay.easebuzz.in";
+    }
+
+    public String getPaymentUrl() {
+        return getPayHostBase() + "/payment/initiateLink";
+    }
+
+    /**
+     * Server-to-server initiate (per current Easebuzz API): POST form body, Accept JSON,
+     * receive access key in {@code data}, then redirect user to {@code /pay/{accessKey}}.
+     */
+    public String initiateAndGetCheckoutUrl(Map<String, String> formFields) throws Exception {
+        String body = formFields.entrySet().stream()
+                .map(e -> encode(e.getKey()) + "=" + encode(e.getValue() != null ? e.getValue() : ""))
+                .collect(Collectors.joining("&"));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(getPaymentUrl()))
+                .timeout(Duration.ofSeconds(45))
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(20))
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        String raw = response.body();
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalStateException("Easebuzz returned empty response (HTTP " + response.statusCode() + ")");
+        }
+
+        JsonNode root = JSON.readTree(raw);
+        int st = parseEasebuzzStatus(root.get("status"));
+        if (st == 1) {
+            String accessKey = root.path("data").asText("").trim();
+            if (accessKey.isEmpty()) {
+                throw new IllegalStateException("Easebuzz success but no access key in response");
+            }
+            return getPayHostBase() + "/pay/" + accessKey;
+        }
+        String err = root.path("error_desc").asText("");
+        if (err.isBlank()) {
+            err = root.path("data").asText("Easebuzz declined initiate");
+        }
+        log.warn("Easebuzz initiate failed: http={} body={}", response.statusCode(), raw.length() > 500 ? raw.substring(0, 500) + "…" : raw);
+        throw new IllegalArgumentException(err);
+    }
+
+    private static String encode(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    private static int parseEasebuzzStatus(JsonNode node) {
+        if (node == null || node.isNull()) return -1;
+        if (node.isNumber()) return node.intValue();
+        if (node.isTextual()) {
+            try {
+                return Integer.parseInt(node.asText().trim());
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return -1;
     }
 
     public Map<String, String> buildInitiateFields(
@@ -87,6 +170,8 @@ public class EasebuzzService {
         f.put("udf10", "");
         f.put("hash", generateRequestHash(txnid, amount, productinfo, firstname, email,
                 f.get("udf1"), f.get("udf2"), f.get("udf3"), f.get("udf4"), f.get("udf5")));
+        // Required for auth & capture on current Easebuzz API (not part of hash).
+        f.put("payment_category", paymentCategory.isEmpty() ? "NCAP" : paymentCategory);
         return f;
     }
 
