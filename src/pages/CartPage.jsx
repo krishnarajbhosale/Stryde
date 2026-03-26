@@ -8,8 +8,9 @@ import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 import { validatePromoCode } from '../api/promoApi'
 
 const DISCOUNT_PER_ORDER = 0
-const GST_RATE = 0.12
-const SHIPPING_FEE = 200
+// GST disabled for now
+const GST_RATE = 0
+const SHIPPING_FEE = 100
 
 function CartPage() {
   const navigate = useNavigate()

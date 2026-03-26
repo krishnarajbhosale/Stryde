@@ -9,6 +9,8 @@ import com.strydeeva.entity.Order.OrderStatus;
 import com.strydeeva.repository.OrderRepository;
 import com.strydeeva.repository.CustomerRepository;
 import com.strydeeva.repository.ProductSizeInventoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final ProductSizeInventoryRepository productSizeInventoryRepository;
@@ -203,7 +206,7 @@ public class OrderService {
         // one-time token to download invoice PDF immediately after placing order
         dto.setInvoiceToken(invoiceTokenService.createTokenForOrder(order.getId()));
         // Send order confirmation email (best-effort)
-        emailNotificationService.sendOrderConfirmedEmail(order.getCustomerEmail(), order.getCustomerName(), order.getOrderNumber());
+        sendOrderConfirmationBestEffort(order);
         return dto;
     }
 
@@ -296,8 +299,25 @@ public class OrderService {
         }
         String token = invoiceTokenService.createTokenForOrder(order.getId());
         // Send order confirmation email (best-effort)
-        emailNotificationService.sendOrderConfirmedEmail(order.getCustomerEmail(), order.getCustomerName(), order.getOrderNumber());
+        sendOrderConfirmationBestEffort(order);
         return token;
+    }
+
+    private void sendOrderConfirmationBestEffort(Order order) {
+        if (order == null) return;
+        String to = order.getCustomerEmail() == null ? "" : order.getCustomerEmail().trim().toLowerCase();
+        if ((to.isBlank() || !to.contains("@")) && order.getCustomerId() != null) {
+            to = customerRepository.findById(order.getCustomerId())
+                    .map(Customer::getEmail)
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .orElse(to);
+        }
+        boolean sent = emailNotificationService.sendOrderConfirmedEmail(to, order.getCustomerName(), order.getOrderNumber());
+        if (!sent) {
+            log.warn("Order confirmation email not sent for orderId={} orderNumber={} resolvedEmail='{}'",
+                    order.getId(), order.getOrderNumber(), to);
+        }
     }
 
     public byte[] exportConfirmedOrdersToExcel() {
@@ -401,8 +421,10 @@ public class OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal promo = request.getPromoDiscount() != null ? request.getPromoDiscount() : BigDecimal.ZERO;
         BigDecimal discountedSubtotal = subtotal.subtract(promo).max(BigDecimal.ZERO);
-        BigDecimal gst = discountedSubtotal.multiply(new BigDecimal("0.12"))
-                .setScale(0, RoundingMode.HALF_UP);
+        // GST currently disabled from checkout UI; trust request breakdown if present.
+        BigDecimal gst = request.getGstAmount() != null
+                ? request.getGstAmount()
+                : BigDecimal.ZERO;
         BigDecimal shipping = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
         BigDecimal cod = request.getCodCharge() != null ? request.getCodCharge() : BigDecimal.ZERO;
         return discountedSubtotal.add(gst).add(shipping).add(cod).setScale(2, RoundingMode.HALF_UP);

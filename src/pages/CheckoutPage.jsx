@@ -7,8 +7,9 @@ import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 import { isCustomerLoggedIn, requestCustomerOtp, verifyCustomerOtp } from '../api/customerAuthApi'
 
 const DISCOUNT_PER_ORDER = 0
-const GST_RATE = 0.12
-const SHIPPING_FEE = 200
+// GST disabled for now
+const GST_RATE = 0
+const SHIPPING_FEE = 100
 
 const inputUnderline =
   'w-full bg-transparent border-0 border-b border-[#E5E5E5]/40 text-[#E5E5E5] placeholder:text-[#808080] py-2.5 focus:outline-none focus:border-[#D1C7B7] transition-colors text-sm uppercase tracking-wide'

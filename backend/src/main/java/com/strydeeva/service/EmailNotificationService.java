@@ -27,6 +27,9 @@ public class EmailNotificationService {
     @Value("${app.notification.contact-email:Contact@strydeeva.com}")
     private String contactEmail;
 
+    @Value("${app.notification.team-email:team@strydeeva.com}")
+    private String teamEmail;
+
     public EmailNotificationService(ObjectProvider<JavaMailSender> mailSenderProvider) {
         this.mailSender = mailSenderProvider.getIfAvailable();
     }
@@ -57,7 +60,12 @@ public class EmailNotificationService {
         sendEmailSafe(adminEmail, "Wallet Credit Processed", adminBody, supportEmail);
     }
 
-    public void sendOrderConfirmedEmail(String customerEmail, String customerName, String orderNumber) {
+    public boolean sendOrderConfirmedEmail(String customerEmail, String customerName, String orderNumber) {
+        String to = safe(customerEmail).toLowerCase();
+        if (to.isBlank() || !to.contains("@")) {
+            log.warn("Order confirmation email skipped: invalid recipient email='{}' order={}", to, orderNumber);
+            return false;
+        }
         String name = (customerName == null || customerName.isBlank()) ? "Customer" : customerName.trim();
         String ord = (orderNumber == null || orderNumber.isBlank()) ? "" : orderNumber.trim();
         String subject = ord.isBlank() ? "Order Confirmed" : ("Order Confirmed - " + ord);
@@ -67,7 +75,38 @@ public class EmailNotificationService {
                 + ".\n\n"
                 + "You can track your order anytime on our website.\n\n"
                 + "Team Strydeeva";
-        sendEmailSafe(customerEmail, subject, body, supportEmail);
+        boolean sent = sendEmailSafe(to, subject, body, teamEmail);
+        if (sent) {
+            log.info("Order confirmation email sent: to={} order={}", to, ord);
+        } else {
+            log.warn("Order confirmation email failed: to={} order={}", to, ord);
+        }
+        return sent;
+    }
+
+    public boolean sendAwbUpdatedEmail(String customerEmail, String customerName, String orderNumber, String awbNumber) {
+        String to = safe(customerEmail).toLowerCase();
+        if (to.isBlank() || !to.contains("@")) {
+            log.warn("AWB email skipped: invalid recipient email='{}' order={} awb={}", to, orderNumber, awbNumber);
+            return false;
+        }
+        String name = (customerName == null || customerName.isBlank()) ? "Customer" : customerName.trim();
+        String ord = (orderNumber == null || orderNumber.isBlank()) ? "-" : orderNumber.trim();
+        String awb = (awbNumber == null || awbNumber.isBlank()) ? "-" : awbNumber.trim();
+        String subject = "AWB Updated - " + ord;
+        String body = "Hi " + name + ",\n\n"
+                + "Your AWB has been updated against your order.\n"
+                + "Order: " + ord + "\n"
+                + "AWB: " + awb + "\n\n"
+                + "Please track it with the help of TDDC.\n\n"
+                + "Team Strydeeva";
+        boolean sent = sendEmailSafe(to, subject, body, teamEmail);
+        if (sent) {
+            log.info("AWB updated email sent: to={} order={} awb={}", to, ord, awb);
+        } else {
+            log.warn("AWB updated email failed: to={} order={} awb={}", to, ord, awb);
+        }
+        return sent;
     }
 
     public boolean sendOtpEmail(String to, String otp) {
@@ -81,7 +120,8 @@ public class EmailNotificationService {
 
     public boolean sendContactFormEmail(String fromName, String fromUserEmail, String subject, String message) {
         String sub = (subject == null || subject.isBlank()) ? "New Contact Form Message" : subject.trim();
-        // Prefix so inbox rules can filter; delivery uses same From as other app mail (relay often allows only certain senders).
+        // Prefix so inbox rules can filter; delivery uses same From as other app mail
+        // (relay often allows only certain senders).
         if (!sub.toLowerCase().startsWith("[contact]")) {
             sub = "[Contact] " + sub;
         }
@@ -89,7 +129,8 @@ public class EmailNotificationService {
                 + "Name: " + safe(fromName) + "\n"
                 + "User Email: " + safe(fromUserEmail) + "\n\n"
                 + "Message:\n" + safe(message) + "\n";
-        // To: Contact inbox. From: support (works with SMTP relay). Reply-To: visitor so you can reply in one click.
+        // To: Contact inbox. From: support (works with SMTP relay). Reply-To: visitor
+        // so you can reply in one click.
         return sendEmailSafe(contactEmail, sub, body, supportEmail, safe(fromUserEmail));
     }
 
@@ -101,12 +142,16 @@ public class EmailNotificationService {
         return sendEmailSafe(to, subject, body, fromOverride, replyTo, null);
     }
 
-    private boolean sendEmailSafe(String to, String subject, String body, String fromOverride, String replyTo, String bcc) {
-        if (to == null || to.isBlank() || mailSender == null) return false;
+    private boolean sendEmailSafe(String to, String subject, String body, String fromOverride, String replyTo,
+            String bcc) {
+        if (to == null || to.isBlank() || mailSender == null)
+            return false;
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
-            String from = (fromOverride != null && !fromOverride.isBlank()) ? fromOverride.trim() : (fromEmail == null ? "" : fromEmail.trim());
-            if (!from.isBlank()) msg.setFrom(from);
+            String from = (fromOverride != null && !fromOverride.isBlank()) ? fromOverride.trim()
+                    : (fromEmail == null ? "" : fromEmail.trim());
+            if (!from.isBlank())
+                msg.setFrom(from);
             msg.setTo(to);
             if (replyTo != null && !replyTo.isBlank()) {
                 msg.setReplyTo(replyTo.trim());
@@ -128,4 +173,3 @@ public class EmailNotificationService {
         return s == null ? "" : s.replaceAll("[\\r\\n\\t]+", " ").trim();
     }
 }
-

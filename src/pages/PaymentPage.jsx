@@ -10,9 +10,10 @@ import { initiateEasebuzzPayment } from '../api/easebuzzApi'
 import { getMyWallet } from '../api/walletApi'
 
 const DISCOUNT_PER_ORDER = 0
-const GST_RATE = 0.12
-const SHIPPING_FEE = 200
-const COD_CHARGE = 250
+// GST disabled for now
+const GST_RATE = 0
+const SHIPPING_FEE = 100
+const COD_CHARGE = 150
 
 /** Easebuzz hosted checkout: /pay/<access_token> — token is alphanumeric, never JS source. */
 function isEasebuzzCheckoutRedirectUrl(url) {
