@@ -30,17 +30,14 @@ public class EasebuzzService {
     private final String env;
     private final String key;
     private final String salt;
-    private final String paymentCategory;
 
     public EasebuzzService(
             @Value("${easebuzz.env:prod}") String env,
             @Value("${easebuzz.key}") String key,
-            @Value("${easebuzz.salt}") String salt,
-            @Value("${easebuzz.payment-category:NCAP}") String paymentCategory) {
+            @Value("${easebuzz.salt}") String salt) {
         this.env = env == null ? "prod" : env.trim().toLowerCase();
         this.key = key == null ? "" : key.trim();
         this.salt = salt == null ? "" : salt.trim();
-        this.paymentCategory = paymentCategory == null ? "NCAP" : paymentCategory.trim();
     }
 
     /**
@@ -123,7 +120,7 @@ public class EasebuzzService {
         String trimmed = raw.trim();
         if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
             log.error("Easebuzz expected JSON but got non-JSON (HTML/error page?). prefix={}", abbreviate(raw, 500));
-            throw new IllegalStateException("Payment gateway returned non-JSON. Verify key, salt, payment_category, and test vs live URL.");
+            throw new IllegalStateException("Payment gateway returned non-JSON. Verify key, salt, and test vs live URL.");
         }
 
         JsonNode root;
@@ -285,8 +282,6 @@ public class EasebuzzService {
         f.put("udf10", "");
         f.put("hash", generateRequestHash(txnid, amount, productinfo, firstname, email,
                 f.get("udf1"), f.get("udf2"), f.get("udf3"), f.get("udf4"), f.get("udf5")));
-        // Required for auth & capture on current Easebuzz API (not part of hash).
-        f.put("payment_category", paymentCategory.isEmpty() ? "NCAP" : paymentCategory);
         return f;
     }
 
