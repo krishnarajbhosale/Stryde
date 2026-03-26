@@ -294,10 +294,6 @@ function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-[#D1C7B7]">
-                  <span>GST (12%)</span>
-                  <span>₹{gstAmount.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between text-sm text-[#D1C7B7]">
                   <span>Shipping</span>
                   <span>₹{shippingFee.toLocaleString('en-IN')}</span>
                 </div>

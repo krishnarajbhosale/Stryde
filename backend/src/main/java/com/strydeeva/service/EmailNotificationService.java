@@ -98,7 +98,7 @@ public class EmailNotificationService {
                 + "Your AWB has been updated against your order.\n"
                 + "Order: " + ord + "\n"
                 + "AWB: " + awb + "\n\n"
-                + "Please track it with the help of TDDC.\n\n"
+                + "Please track it with the help of DTDC.\n\n"
                 + "Team Strydeeva";
         boolean sent = sendEmailSafe(to, subject, body, teamEmail);
         if (sent) {

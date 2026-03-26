@@ -183,11 +183,13 @@ public class EasebuzzPaymentController {
         return safe(first) + " + " + (req.getItems().size() - 1) + " more";
     }
 
-    /** Product info length cap for gateway payload. */
+    /** Easebuzz-safe productinfo (allowed chars + max 45 chars). */
     private String trimProductInfo(String productinfo) {
         String s = safe(productinfo);
-        if (s.length() <= 10000) return s;
-        return s.substring(0, 10000);
+        // Keep only conservative allowed chars for gateway validation.
+        s = s.replaceAll("[^a-zA-Z0-9\\s\\-\\|]", "");
+        if (s.length() <= 45) return s;
+        return s.substring(0, 45);
     }
 
     /** Prefer digits-only phone within 5–20 chars as per Easebuzz pattern. */

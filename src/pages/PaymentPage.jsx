@@ -176,7 +176,6 @@ function PaymentPage() {
         shippingAddress: String(checkoutForm.address || '').trim(),
         city: String(checkoutForm.city || '').trim(),
         pinCode: String(checkoutForm.pinCode || '').trim(),
-        gstNumber: String(checkoutForm.gstNumber || '').trim(),
         promoCode: promo?.code || '',
         promoDiscount: Number(promoDiscount || 0),
         shippingFee: Number(shippingFee || 0),
@@ -341,10 +340,6 @@ function PaymentPage() {
             <span>- ₹{Number(promoDiscount).toLocaleString('en-IN')}</span>
           </div>
         )}
-        <div className="flex justify-between">
-          <span>GST (12%)</span>
-          <span>₹{gstAmount.toLocaleString('en-IN')}</span>
-        </div>
         <div className="flex justify-between">
           <span>Shipping</span>
           <span>₹{shippingFee.toLocaleString('en-IN')}</span>

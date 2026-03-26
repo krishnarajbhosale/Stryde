@@ -30,7 +30,6 @@ function CheckoutPage() {
   const [form, setForm] = useState({
     email: '',
     mobile: '',
-    gstNumber: '',
     keepUpdated: false,
     firstName: '',
     lastName: '',
@@ -210,10 +209,6 @@ function CheckoutPage() {
           </div>
         )}
         <div className="flex justify-between">
-          <span>GST (12%)</span>
-          <span>₹{gstAmount.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="flex justify-between">
           <span>Shipping</span>
           <span>₹{shippingFee.toLocaleString('en-IN')}</span>
         </div>
@@ -342,15 +337,6 @@ function CheckoutPage() {
                     required
                   />
                 </div>
-                <input
-                  type="text"
-                  name="gstNumber"
-                  value={form.gstNumber}
-                  onChange={handleChange}
-                  placeholder="GST Number (optional)"
-                  className={inputUnderline}
-                  aria-label="GST Number"
-                />
               </section>
 
               <div className="border-t border-[#E5E5E5]/20 pt-6">
@@ -465,15 +451,6 @@ function CheckoutPage() {
                     required
                   />
                 </div>
-                <input
-                  type="text"
-                  name="gstNumber"
-                  value={form.gstNumber}
-                  onChange={handleChange}
-                  placeholder="GST Number (optional)"
-                  className={inputUnderline}
-                  aria-label="GST Number"
-                />
               </section>
 
               <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/20">
