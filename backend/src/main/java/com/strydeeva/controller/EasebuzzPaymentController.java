@@ -115,10 +115,19 @@ public class EasebuzzPaymentController {
             map.put(e.getKey(), e.getValue() != null && !e.getValue().isEmpty() ? e.getValue().get(0) : "");
         }
 
-        boolean hashOk = easebuzzService.verifyResponseHash(map);
         String status = safe(map.get("status"));
         String orderIdStr = safe(map.get("udf1"));
         String orderNumber = safe(map.get("udf2"));
+        String txnid = safe(map.get("txnid"));
+
+        boolean hashOk = false;
+        try {
+            hashOk = easebuzzService.verifyResponseHash(map);
+        } catch (Exception e) {
+            // Never break gateway redirect due to hash parsing issues.
+            log.warn("Easebuzz return: hash verify error: {}", e.getMessage());
+            hashOk = false;
+        }
 
         String finalStatus = "failure";
         String invoiceToken = "";
@@ -127,9 +136,31 @@ public class EasebuzzPaymentController {
             if (!orderIdStr.isBlank()) orderId = Long.parseLong(orderIdStr);
         } catch (Exception ignored) {}
 
-        if (hashOk && orderId != null && ("success".equalsIgnoreCase(status) || (isSuccessUrl && !status.isBlank()))) {
-            finalStatus = "success";
-            invoiceToken = orderService.confirmPendingOrder(orderId);
+        boolean gatewaySaysSuccess = "success".equalsIgnoreCase(status) || (isSuccessUrl && !status.isBlank() && !"failure".equalsIgnoreCase(status));
+        log.info("Easebuzz return: method={} urlType={} statusField={} hashOk={} txnid={} udf1(orderId)={} udf2(orderNo)={}",
+                (isSuccessUrl ? "success" : "failure"),
+                (isSuccessUrl ? "SURL" : "FURL"),
+                status,
+                hashOk,
+                txnid,
+                orderIdStr,
+                orderNumber);
+
+        if (orderId != null && gatewaySaysSuccess) {
+            if (hashOk) {
+                try {
+                    finalStatus = "success";
+                    invoiceToken = orderService.confirmPendingOrder(orderId);
+                } catch (Exception e) {
+                    // Do not block redirect; user should still land on website and see failure/retry message.
+                    log.error("Easebuzz return: confirmPendingOrder failed for orderId={}", orderId, e);
+                    finalStatus = "failure";
+                    invoiceToken = "";
+                }
+            } else {
+                // If hash invalid, treat as failure but still redirect out of gateway.
+                finalStatus = "failure";
+            }
         }
 
         String redirect = (frontendBaseUrl.isBlank() ? "http://localhost:5173" : frontendBaseUrl)
