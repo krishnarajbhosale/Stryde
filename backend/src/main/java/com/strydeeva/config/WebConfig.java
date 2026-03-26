@@ -31,7 +31,11 @@ public class WebConfig {
         // Easebuzz callback endpoints must accept cross-site POSTs reliably.
         // Some gateway browsers can send varying Origin headers; do NOT require cookies here.
         CorsConfiguration easebuzzCallbackCors = new CorsConfiguration();
-        easebuzzCallbackCors.addAllowedOriginPattern("*");
+        // Be explicit: some Spring setups still reject "*" patterns for non-simple requests.
+        easebuzzCallbackCors.setAllowedOrigins(List.of(
+                "https://pay.easebuzz.in",
+                "https://testpay.easebuzz.in"
+        ));
         easebuzzCallbackCors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         easebuzzCallbackCors.setAllowedHeaders(List.of("*"));
         easebuzzCallbackCors.setAllowCredentials(false);
