@@ -13,6 +13,7 @@ public class WebConfig {
 
     @Bean
     public CorsFilter corsFilter() {
+        // Default CORS for your site + local dev (credentials allowed for auth endpoints).
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
@@ -26,7 +27,17 @@ public class WebConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+
+        // Easebuzz callback endpoints must accept cross-site POSTs reliably.
+        // Some gateway browsers can send varying Origin headers; do NOT require cookies here.
+        CorsConfiguration easebuzzCallbackCors = new CorsConfiguration();
+        easebuzzCallbackCors.addAllowedOriginPattern("*");
+        easebuzzCallbackCors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        easebuzzCallbackCors.setAllowedHeaders(List.of("*"));
+        easebuzzCallbackCors.setAllowCredentials(false);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/payments/easebuzz/**", easebuzzCallbackCors);
         source.registerCorsConfiguration("/api/**", config);
         return new CorsFilter(source);
     }
