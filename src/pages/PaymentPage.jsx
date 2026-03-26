@@ -14,6 +14,12 @@ const GST_RATE = 0.12
 const SHIPPING_FEE = 200
 const COD_CHARGE = 250
 
+/** Easebuzz hosted checkout: /pay/<access_token> — token is alphanumeric, never JS source. */
+function isEasebuzzCheckoutRedirectUrl(url) {
+  return typeof url === 'string'
+    && /^https:\/\/(pay|testpay)\.easebuzz\.in\/pay\/[a-zA-Z0-9_-]{16,128}$/.test(url.trim())
+}
+
 const ALL_PAYMENT_OPTIONS = [
   { id: 'cod', label: 'CASH ON DELIVERY' },
   { id: 'upi', label: 'UPI (PAY VIA ANY APP)' },
@@ -228,9 +234,13 @@ function PaymentPage() {
 
       // Online payment: backend S2S initiate → Easebuzz returns access key → open hosted checkout
       const init = await initiateEasebuzzPayment(payload, paymentMethod)
-      if (init.redirectUrl) {
-        window.location.href = init.redirectUrl
+      const redirectUrl = init.redirectUrl
+      if (redirectUrl && isEasebuzzCheckoutRedirectUrl(redirectUrl)) {
+        window.location.assign(redirectUrl)
         return
+      }
+      if (redirectUrl) {
+        throw new Error('Invalid payment redirect URL from server. Deploy the latest backend and try again.')
       }
       // Legacy: form POST to initiateLink (older docs)
       const form = document.createElement('form')

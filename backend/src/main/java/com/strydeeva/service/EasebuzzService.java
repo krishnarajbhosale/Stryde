@@ -102,10 +102,13 @@ public class EasebuzzService {
         JsonNode root = JSON.readTree(raw);
         int st = parseEasebuzzStatus(root.get("status"));
         if (st == 1) {
-            String accessKey = root.path("data").asText("").trim();
-            if (accessKey.isEmpty()) {
-                throw new IllegalStateException("Easebuzz success but no access key in response");
+            String accessKey = extractAccessKeyFromInitResponse(root);
+            if (!isPlausibleEasebuzzAccessKey(accessKey)) {
+                log.error("Easebuzz returned success but data is not a valid access key (rejecting unsafe redirect). Body snippet: {}",
+                        raw.length() > 240 ? raw.substring(0, 240) + "…" : raw);
+                throw new IllegalStateException("Invalid payment session token from gateway. Check API response format or contact Easebuzz.");
             }
+            log.info("Easebuzz initiate OK, checkout token length={}", accessKey.length());
             return getPayHostBase() + "/pay/" + accessKey;
         }
         String err = root.path("error_desc").asText("");
@@ -118,6 +121,45 @@ public class EasebuzzService {
 
     private static String encode(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Docs: {@code data} is the access key string; some payloads may nest it.
+     */
+    private static String extractAccessKeyFromInitResponse(JsonNode root) {
+        JsonNode data = root.get("data");
+        if (data == null || data.isNull()) {
+            return "";
+        }
+        if (data.isTextual()) {
+            return data.asText().trim();
+        }
+        if (data.isObject()) {
+            String v = data.path("access_key").asText("").trim();
+            if (!v.isEmpty()) return v;
+            v = data.path("accessKey").asText("").trim();
+            if (!v.isEmpty()) return v;
+            v = data.path("token").asText("").trim();
+            if (!v.isEmpty()) return v;
+        }
+        return "";
+    }
+
+    /**
+     * Hosted checkout paths look like {@code /pay/a1b2c3d4e5...} — alphanumeric token, no JS/source.
+     */
+    private static boolean isPlausibleEasebuzzAccessKey(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        if (token.length() < 16 || token.length() > 128) {
+            return false;
+        }
+        // Reject garbage (e.g. stringified functions) that ended up in the path
+        if (token.contains("function") || token.contains("=>") || token.contains("return(")) {
+            return false;
+        }
+        return token.matches("^[a-zA-Z0-9_-]+$");
     }
 
     private static int parseEasebuzzStatus(JsonNode node) {
