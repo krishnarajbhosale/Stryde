@@ -98,12 +98,13 @@ public class EasebuzzPaymentController {
         }
     }
 
-    @PostMapping("/success")
+    // Easebuzz may call SURL/FURL as POST (form) or GET (query). Accept both.
+    @RequestMapping(path = "/success", method = {RequestMethod.POST, RequestMethod.GET})
     public ResponseEntity<?> success(@RequestParam MultiValueMap<String, String> params) {
         return handleGatewayReturn(params, true);
     }
 
-    @PostMapping("/failure")
+    @RequestMapping(path = "/failure", method = {RequestMethod.POST, RequestMethod.GET})
     public ResponseEntity<?> failure(@RequestParam MultiValueMap<String, String> params) {
         return handleGatewayReturn(params, false);
     }
