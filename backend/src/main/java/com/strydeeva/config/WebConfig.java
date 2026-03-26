@@ -24,7 +24,17 @@ public class WebConfig {
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
+        // Payment gateway endpoints must accept cross-site POSTs reliably (no cookies needed).
+        // If the browser sends an unexpected Origin (or "null"), Spring can return 403 "Invalid CORS request".
+        // Keep this permissive but scoped only to the Easebuzz payment endpoints.
+        CorsConfiguration easebuzzPublicCors = new CorsConfiguration();
+        easebuzzPublicCors.addAllowedOriginPattern("*");
+        easebuzzPublicCors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        easebuzzPublicCors.setAllowedHeaders(List.of("*"));
+        easebuzzPublicCors.setAllowCredentials(false);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/payments/easebuzz/**", easebuzzPublicCors);
         source.registerCorsConfiguration("/api/**", config);
         return new CorsFilter(source);
     }
