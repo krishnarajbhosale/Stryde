@@ -38,14 +38,8 @@ public class EmailNotificationService {
                 + "Issue: " + issueText + "\n\n"
                 + "Our team will contact you shortly.\n\n"
                 + "Team Strydeeva";
-        sendEmailSafe(customerEmail, "Return/Exchange Request Received", userBody, supportEmail);
-
-        String adminBody = "New return/exchange request submitted.\n\n"
-                + "Customer: " + customerName + "\n"
-                + "Email: " + customerEmail + "\n"
-                + "Order: " + orderId + "\n"
-                + "Issue: " + issueText + "\n";
-        sendEmailSafe(adminEmail, "New Return/Exchange Request", adminBody, supportEmail);
+        // Single email to user; keep support team in BCC.
+        sendEmailSafe(customerEmail, "Return/Exchange Request Received", userBody, supportEmail, null, supportEmail);
     }
 
     public void sendWalletCreditEmails(String customerEmail, String orderNumber, String amount) {
@@ -87,10 +81,14 @@ public class EmailNotificationService {
     }
 
     private boolean sendEmailSafe(String to, String subject, String body, String fromOverride) {
-        return sendEmailSafe(to, subject, body, fromOverride, null);
+        return sendEmailSafe(to, subject, body, fromOverride, null, null);
     }
 
     private boolean sendEmailSafe(String to, String subject, String body, String fromOverride, String replyTo) {
+        return sendEmailSafe(to, subject, body, fromOverride, replyTo, null);
+    }
+
+    private boolean sendEmailSafe(String to, String subject, String body, String fromOverride, String replyTo, String bcc) {
         if (to == null || to.isBlank() || mailSender == null) return false;
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
@@ -99,6 +97,9 @@ public class EmailNotificationService {
             msg.setTo(to);
             if (replyTo != null && !replyTo.isBlank()) {
                 msg.setReplyTo(replyTo.trim());
+            }
+            if (bcc != null && !bcc.isBlank()) {
+                msg.setBcc(bcc.trim());
             }
             msg.setSubject(subject);
             msg.setText(body);
