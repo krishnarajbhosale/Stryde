@@ -38,6 +38,8 @@ public class CreateOrderRequestDto {
     private BigDecimal shippingFee;
     private BigDecimal codCharge;
     private BigDecimal gstAmount;
+    /** Rupees to pay from wallet (max = wallet balance and pre-wallet order total). */
+    private BigDecimal walletDiscount;
     @NotNull(message = "Total amount is required")
     @DecimalMin(value = "0", message = "Total amount must be >= 0")
     private BigDecimal totalAmount;
@@ -102,6 +104,8 @@ public class CreateOrderRequestDto {
     public void setCodCharge(BigDecimal codCharge) { this.codCharge = codCharge; }
     public BigDecimal getGstAmount() { return gstAmount; }
     public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
+    public BigDecimal getWalletDiscount() { return walletDiscount; }
+    public void setWalletDiscount(BigDecimal walletDiscount) { this.walletDiscount = walletDiscount; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public List<OrderItemRequestDto> getItems() { return items; }

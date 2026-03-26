@@ -7,6 +7,7 @@ import { fetchProducts, PRICE_ADD_ON } from '../api/productsApi'
 import { createOrder } from '../api/ordersApi'
 import { isCustomerLoggedIn, requestCustomerOtp, verifyCustomerOtp } from '../api/customerAuthApi'
 import { initiateEasebuzzPayment } from '../api/easebuzzApi'
+import { getMyWallet } from '../api/walletApi'
 
 const DISCOUNT_PER_ORDER = 0
 const GST_RATE = 0.12
@@ -39,6 +40,10 @@ function PaymentPage() {
   const [authDevOtp, setAuthDevOtp] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
 
+  const [walletBalance, setWalletBalance] = useState(0)
+  /** Rupees from wallet user asked to apply (capped against balance and pre-wallet total). */
+  const [walletUse, setWalletUse] = useState(0)
+
   useEffect(() => {
     let cancelled = false
     fetchProducts()
@@ -69,7 +74,32 @@ function PaymentPage() {
   const gstAmount = Math.round(discountedSubtotal * GST_RATE)
   const shippingFee = cartItemsWithProduct.length > 0 ? SHIPPING_FEE : 0
   const codCharge = paymentMethod === 'cod' ? COD_CHARGE : 0
-  const totalAmount = discountedSubtotal + gstAmount + shippingFee + codCharge
+  const preWalletTotal = discountedSubtotal + gstAmount + shippingFee + codCharge
+  const maxWalletUse = isCustomerLoggedIn()
+    ? Math.min(Number(walletBalance) || 0, preWalletTotal)
+    : 0
+  const effectiveWallet = Math.min(Math.max(0, walletUse), maxWalletUse)
+  const payableTotal = Math.round((preWalletTotal - effectiveWallet) * 100) / 100
+
+  useEffect(() => {
+    setWalletUse((w) => Math.min(Math.max(0, w), maxWalletUse))
+  }, [maxWalletUse])
+
+  useEffect(() => {
+    if (!isCustomerLoggedIn()) {
+      setWalletBalance(0)
+      return
+    }
+    let cancelled = false
+    getMyWallet()
+      .then((d) => {
+        if (!cancelled) setWalletBalance(Number(d.balance) || 0)
+      })
+      .catch(() => {
+        if (!cancelled) setWalletBalance(0)
+      })
+    return () => { cancelled = true }
+  }, [authOpen])
 
   useEffect(() => {
     if (cart.length === 0) navigate('/cart', { replace: true })
@@ -145,7 +175,8 @@ function PaymentPage() {
         shippingFee: Number(shippingFee || 0),
         codCharge: Number(codCharge || 0),
         gstAmount: Number(gstAmount || 0),
-        totalAmount: Number(totalAmount),
+        walletDiscount: Number(effectiveWallet.toFixed(2)),
+        totalAmount: Number(payableTotal.toFixed(2)),
         items: cartItemsWithProduct.map((item) => {
           const obj = {
             productId: Number(item.productId),
@@ -159,10 +190,7 @@ function PaymentPage() {
         }),
       }
 
-      if (paymentMethod === 'cod') {
-        const order = await createOrder(payload)
-
-        // Download invoice immediately (more reliable than triggering from OrderSuccessPage)
+      const finishConfirmedOrder = async (order) => {
         if (order?.id && order?.invoiceToken) {
           try {
             const res = await fetch(`/api/orders/${order.id}/invoice.pdf?token=${encodeURIComponent(order.invoiceToken)}`)
@@ -181,9 +209,20 @@ function PaymentPage() {
             // ignore invoice download errors here; user can download again on success page
           }
         }
-
         clearCart()
         navigate('/order-success', { state: { orderNumber: order.orderNumber, orderId: order.id, invoiceToken: order.invoiceToken } })
+      }
+
+      // Fully covered by wallet: confirm via same path as COD (no gateway amount).
+      if (payableTotal <= 0 && effectiveWallet > 0) {
+        const order = await createOrder(payload)
+        await finishConfirmedOrder(order)
+        return
+      }
+
+      if (paymentMethod === 'cod') {
+        const order = await createOrder(payload)
+        await finishConfirmedOrder(order)
         return
       }
 
@@ -298,11 +337,58 @@ function PaymentPage() {
           <span>COD Charges</span>
           <span>{codCharge ? `₹${codCharge.toLocaleString('en-IN')}` : '—'}</span>
         </div>
+        {isCustomerLoggedIn() && maxWalletUse > 0 && (
+          <div className="pt-3 mt-3 border-t border-[#E5E5E5]/15 space-y-2">
+            <div className="flex justify-between text-xs uppercase tracking-wide text-[#E5E5E5]/80">
+              <span>Wallet balance</span>
+              <span>₹{Number(walletBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="wallet-use" className="text-xs uppercase tracking-wide text-[#E5E5E5]/80 sr-only">
+                Use from wallet (₹)
+              </label>
+              <input
+                id="wallet-use"
+                type="number"
+                min={0}
+                max={maxWalletUse}
+                step={1}
+                value={walletUse === 0 ? '' : walletUse}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  if (raw === '') {
+                    setWalletUse(0)
+                    return
+                  }
+                  const n = Number(raw)
+                  if (Number.isNaN(n)) return
+                  setWalletUse(Math.min(Math.max(0, n), maxWalletUse))
+                }}
+                placeholder="0"
+                className="w-28 bg-transparent border border-[#E5E5E5]/30 text-[#E5E5E5] text-sm px-2 py-1.5 rounded-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setWalletUse(maxWalletUse)}
+                className="text-xs uppercase tracking-wide text-[#D1C7B7] hover:opacity-90"
+              >
+                Use max
+              </button>
+            </div>
+            <p className="text-[10px] text-[#E5E5E5]/55">Up to ₹{maxWalletUse.toLocaleString('en-IN')} can be applied to this order.</p>
+          </div>
+        )}
+        {effectiveWallet > 0 && (
+          <div className="flex justify-between pt-2">
+            <span>Wallet</span>
+            <span>- ₹{effectiveWallet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        )}
       </div>
       <div className="h-px bg-[#E5E5E5]/20 my-4" />
       <div className="flex justify-between text-base font-medium text-[#E5E5E5] mb-4">
         <span>TOTAL AMOUNT</span>
-        <span>₹{totalAmount.toLocaleString('en-IN')}</span>
+        <span>₹{payableTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
       </div>
       <p className="text-[10px] text-[#E5E5E5]/70 leading-relaxed">
         BY PLACING THE ORDER, YOU AGREE TO STRYDEEVA&apos;S TERMS OF USE AND PRIVACY POLICY.

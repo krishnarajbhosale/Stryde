@@ -20,6 +20,7 @@ public class OrderResponseDto {
     private BigDecimal shippingFee;
     private BigDecimal codCharge;
     private BigDecimal gstAmount;
+    private BigDecimal walletDiscount;
     private BigDecimal totalAmount;
     private String awbNumber;
     private String invoiceToken;
@@ -84,6 +85,8 @@ public class OrderResponseDto {
     public void setCodCharge(BigDecimal codCharge) { this.codCharge = codCharge; }
     public BigDecimal getGstAmount() { return gstAmount; }
     public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
+    public BigDecimal getWalletDiscount() { return walletDiscount; }
+    public void setWalletDiscount(BigDecimal walletDiscount) { this.walletDiscount = walletDiscount; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public String getAwbNumber() { return awbNumber; }

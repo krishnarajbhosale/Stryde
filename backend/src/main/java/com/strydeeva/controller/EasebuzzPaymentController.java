@@ -45,7 +45,7 @@ public class EasebuzzPaymentController {
         // Create PENDING order before redirecting to gateway
         Order order = orderService.createPendingOrder(orderReq, req.getPaymentMethod(), "easebuzz", txnid);
 
-        String amount = fmtAmount(orderReq.getTotalAmount());
+        String amount = fmtAmount(order.getTotalAmount());
         String firstname = safe(orderReq.getCustomerName());
         String email = safe(orderReq.getCustomerEmail()).toLowerCase();
         String phone = safe(orderReq.getCustomerMobile());

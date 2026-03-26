@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -28,17 +29,20 @@ public class OrderService {
     private final CustomerRepository customerRepository;
     private final ProductSizeInventoryRepository productSizeInventoryRepository;
     private final InvoiceTokenService invoiceTokenService;
+    private final WalletService walletService;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
             .withZone(ZoneId.systemDefault());
 
     public OrderService(OrderRepository orderRepository,
             CustomerRepository customerRepository,
             ProductSizeInventoryRepository productSizeInventoryRepository,
-            InvoiceTokenService invoiceTokenService) {
+            InvoiceTokenService invoiceTokenService,
+            WalletService walletService) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.productSizeInventoryRepository = productSizeInventoryRepository;
         this.invoiceTokenService = invoiceTokenService;
+        this.walletService = walletService;
     }
 
     public List<OrderResponseDto> getConfirmedOrders() {
@@ -111,15 +115,21 @@ public class OrderService {
         order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
         order.setCodCharge(request.getCodCharge() != null ? request.getCodCharge() : BigDecimal.ZERO);
         order.setGstAmount(request.getGstAmount() != null ? request.getGstAmount() : BigDecimal.ZERO);
+        Long customerId = null;
         if (!normalizedEmail.isBlank()) {
             Customer customer = customerRepository.findByEmailIgnoreCase(normalizedEmail).orElseGet(() -> {
                 Customer c = new Customer();
                 c.setEmail(normalizedEmail);
                 return customerRepository.save(c);
             });
-            order.setCustomerId(customer.getId());
+            customerId = customer.getId();
+            order.setCustomerId(customerId);
         }
-        order.setTotalAmount(request.getTotalAmount() != null ? request.getTotalAmount() : BigDecimal.ZERO);
+        BigDecimal walletUse = resolveWalletDiscount(request, customerId);
+        BigDecimal preTotal = computePreWalletTotal(request);
+        BigDecimal finalTotal = preTotal.subtract(walletUse).setScale(2, RoundingMode.HALF_UP);
+        order.setWalletDiscount(walletUse);
+        order.setTotalAmount(finalTotal);
         order.setStatus(OrderStatus.CONFIRMED);
 
         for (CreateOrderRequestDto.OrderItemRequestDto itemReq : request.getItems()) {
@@ -137,6 +147,10 @@ public class OrderService {
         }
 
         order = orderRepository.save(order);
+
+        if (walletUse.compareTo(BigDecimal.ZERO) > 0 && order.getCustomerId() != null) {
+            walletService.debitForOrder(order.getCustomerId(), order.getId(), walletUse);
+        }
 
         // Decrement product size inventory for each ordered item (skip custom size
         // items)
@@ -169,6 +183,7 @@ public class OrderService {
         dto.setShippingFee(order.getShippingFee());
         dto.setCodCharge(order.getCodCharge());
         dto.setGstAmount(order.getGstAmount());
+        dto.setWalletDiscount(order.getWalletDiscount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
         dto.setCreatedAt(order.getCreatedAt());
@@ -212,15 +227,21 @@ public class OrderService {
         order.setPaymentMethod(paymentMethod != null ? paymentMethod.trim().toLowerCase() : null);
         order.setPaymentProvider(paymentProvider != null ? paymentProvider.trim().toLowerCase() : null);
         order.setPaymentTxnId(paymentTxnId != null ? paymentTxnId.trim() : null);
+        Long customerId = null;
         if (!normalizedEmail.isBlank()) {
             Customer customer = customerRepository.findByEmailIgnoreCase(normalizedEmail).orElseGet(() -> {
                 Customer c = new Customer();
                 c.setEmail(normalizedEmail);
                 return customerRepository.save(c);
             });
-            order.setCustomerId(customer.getId());
+            customerId = customer.getId();
+            order.setCustomerId(customerId);
         }
-        order.setTotalAmount(request.getTotalAmount() != null ? request.getTotalAmount() : BigDecimal.ZERO);
+        BigDecimal walletUse = resolveWalletDiscount(request, customerId);
+        BigDecimal preTotal = computePreWalletTotal(request);
+        BigDecimal finalTotal = preTotal.subtract(walletUse).setScale(2, RoundingMode.HALF_UP);
+        order.setWalletDiscount(walletUse);
+        order.setTotalAmount(finalTotal);
         order.setStatus(OrderStatus.PENDING);
 
         for (CreateOrderRequestDto.OrderItemRequestDto itemReq : request.getItems()) {
@@ -249,6 +270,11 @@ public class OrderService {
         }
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
+
+        BigDecimal wd = order.getWalletDiscount() != null ? order.getWalletDiscount() : BigDecimal.ZERO;
+        if (wd.compareTo(BigDecimal.ZERO) > 0 && order.getCustomerId() != null) {
+            walletService.debitForOrder(order.getCustomerId(), order.getId(), wd);
+        }
 
         // Decrement product size inventory for each ordered item (skip custom size items)
         for (OrderItem orderItem : order.getItems()) {
@@ -339,6 +365,7 @@ public class OrderService {
         dto.setCodCharge(order.getCodCharge());
         dto.setGstAmount(order.getGstAmount());
         dto.setAwbNumber(order.getAwbNumber());
+        dto.setWalletDiscount(order.getWalletDiscount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
         dto.setCreatedAt(order.getCreatedAt());
@@ -351,5 +378,50 @@ public class OrderService {
                         item.getCustomSizeId()))
                 .collect(Collectors.toList()));
         return dto;
+    }
+
+    /** Matches PaymentPage/CartPage: sum(items) − promo, GST 12% rounded to whole rupees, + shipping + COD. */
+    private BigDecimal computePreWalletTotal(CreateOrderRequestDto request) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal subtotal = request.getItems().stream()
+                .map(i -> {
+                    BigDecimal unit = i.getUnitPrice() != null ? i.getUnitPrice() : BigDecimal.ZERO;
+                    int qty = Math.max(1, i.getQuantity());
+                    return unit.multiply(BigDecimal.valueOf(qty));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal promo = request.getPromoDiscount() != null ? request.getPromoDiscount() : BigDecimal.ZERO;
+        BigDecimal discountedSubtotal = subtotal.subtract(promo).max(BigDecimal.ZERO);
+        BigDecimal gst = discountedSubtotal.multiply(new BigDecimal("0.12"))
+                .setScale(0, RoundingMode.HALF_UP);
+        BigDecimal shipping = request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal cod = request.getCodCharge() != null ? request.getCodCharge() : BigDecimal.ZERO;
+        return discountedSubtotal.add(gst).add(shipping).add(cod).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Server-authoritative wallet use: min(requested, balance, pre-total). Validates client totalAmount ≈ pre − wallet (₹1 tolerance).
+     */
+    private BigDecimal resolveWalletDiscount(CreateOrderRequestDto request, Long customerId) {
+        BigDecimal requested = request.getWalletDiscount();
+        if (requested == null || requested.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        if (customerId == null) {
+            throw new IllegalArgumentException("Sign in to use wallet balance");
+        }
+        BigDecimal reqScaled = requested.max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal pre = computePreWalletTotal(request);
+        BigDecimal bal = walletService.getBalance(customerId);
+        BigDecimal capped = reqScaled.min(bal).min(pre).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal expectedPayable = pre.subtract(capped).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal clientTotal = request.getTotalAmount() != null ? request.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal diff = expectedPayable.subtract(clientTotal).abs();
+        if (diff.compareTo(new BigDecimal("1.01")) > 0) {
+            throw new IllegalArgumentException("Order total does not match. Refresh and try again.");
+        }
+        return capped;
     }
 }

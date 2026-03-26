@@ -8,6 +8,7 @@ import com.strydeeva.repository.CustomerRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,12 +57,36 @@ public class WalletService {
         return saved;
     }
 
-    public Map<String, Object> getWalletForCustomerId(Long customerId) {
-        List<WalletTransaction> txns = customerId == null ? List.of() : walletTransactionRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
-        BigDecimal balance = txns.stream()
+    public BigDecimal getBalance(Long customerId) {
+        if (customerId == null) return BigDecimal.ZERO;
+        return walletTransactionRepository.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
                 .map(WalletTransaction::getAmount)
                 .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Deduct wallet for an order (negative txn). Call only after order is persisted with a real id.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void debitForOrder(Long customerId, Long orderId, BigDecimal amount) {
+        if (customerId == null || orderId == null) return;
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+        BigDecimal bal = getBalance(customerId);
+        if (amount.compareTo(bal) > 0) {
+            throw new IllegalArgumentException("Insufficient wallet balance");
+        }
+        WalletTransaction tx = new WalletTransaction();
+        tx.setCustomerId(customerId);
+        tx.setOrderId(orderId);
+        tx.setAmount(amount.negate().setScale(2, RoundingMode.HALF_UP));
+        walletTransactionRepository.save(tx);
+    }
+
+    public Map<String, Object> getWalletForCustomerId(Long customerId) {
+        List<WalletTransaction> txns = customerId == null ? List.of() : walletTransactionRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+        BigDecimal balance = getBalance(customerId);
         List<Map<String, Object>> rows = txns.stream().map(tx -> {
             Map<String, Object> m = new HashMap<>();
             m.put("id", tx.getId());

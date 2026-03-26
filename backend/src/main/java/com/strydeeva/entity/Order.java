@@ -60,6 +60,10 @@ public class Order {
     @Column(name = "gst_amount", precision = 12, scale = 2)
     private BigDecimal gstAmount;
 
+    /** Amount deducted from customer wallet for this order (not additional discount rows). */
+    @Column(name = "wallet_discount", precision = 12, scale = 2)
+    private BigDecimal walletDiscount = BigDecimal.ZERO;
+
     @Column(name = "payment_method", length = 30)
     private String paymentMethod;
 
@@ -120,6 +124,8 @@ public class Order {
     public void setCodCharge(BigDecimal codCharge) { this.codCharge = codCharge; }
     public BigDecimal getGstAmount() { return gstAmount; }
     public void setGstAmount(BigDecimal gstAmount) { this.gstAmount = gstAmount; }
+    public BigDecimal getWalletDiscount() { return walletDiscount; }
+    public void setWalletDiscount(BigDecimal walletDiscount) { this.walletDiscount = walletDiscount; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public String getPaymentProvider() { return paymentProvider; }

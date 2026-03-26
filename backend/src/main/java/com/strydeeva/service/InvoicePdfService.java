@@ -53,6 +53,7 @@ public class InvoicePdfService {
             BigDecimal shipping = nvl(order.getShippingFee());
             BigDecimal cod = nvl(order.getCodCharge());
             BigDecimal gst = nvl(order.getGstAmount());
+            BigDecimal walletUse = nvl(order.getWalletDiscount());
             BigDecimal grandTotal = nvl(order.getTotalAmount());
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
@@ -180,6 +181,9 @@ public class InvoicePdfService {
                 sumRows.add(new String[] { "GST (12%)", fmtMoney(gst) });
                 if (shipping.compareTo(BigDecimal.ZERO) > 0) sumRows.add(new String[] { "Shipping", fmtMoney(shipping) });
                 if (cod.compareTo(BigDecimal.ZERO) > 0) sumRows.add(new String[] { "COD Charges", fmtMoney(cod) });
+                if (walletUse.compareTo(BigDecimal.ZERO) > 0) {
+                    sumRows.add(new String[] { "Wallet", "- " + fmtMoney(walletUse) });
+                }
 
                 // draw rows
                 for (String[] r : sumRows) {

@@ -1,5 +1,7 @@
 package com.strydeeva.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.SimpleMailMessage;
@@ -8,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EmailNotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailNotificationService.class);
 
     private final JavaMailSender mailSender;
 
@@ -70,26 +74,38 @@ public class EmailNotificationService {
 
     public boolean sendContactFormEmail(String fromName, String fromUserEmail, String subject, String message) {
         String sub = (subject == null || subject.isBlank()) ? "New Contact Form Message" : subject.trim();
-        String body = "New message from Contact Form\n\n"
+        // Prefix so inbox rules can filter; delivery uses same From as other app mail (relay often allows only certain senders).
+        if (!sub.toLowerCase().startsWith("[contact]")) {
+            sub = "[Contact] " + sub;
+        }
+        String body = "New message from Contact Form (reply goes to the visitor if your client uses Reply-To).\n\n"
                 + "Name: " + safe(fromName) + "\n"
                 + "User Email: " + safe(fromUserEmail) + "\n\n"
                 + "Message:\n" + safe(message) + "\n";
-        return sendEmailSafe(contactEmail, sub, body, contactEmail);
+        // To: Contact inbox. From: support (works with SMTP relay). Reply-To: visitor so you can reply in one click.
+        return sendEmailSafe(contactEmail, sub, body, supportEmail, safe(fromUserEmail));
     }
 
     private boolean sendEmailSafe(String to, String subject, String body, String fromOverride) {
+        return sendEmailSafe(to, subject, body, fromOverride, null);
+    }
+
+    private boolean sendEmailSafe(String to, String subject, String body, String fromOverride, String replyTo) {
         if (to == null || to.isBlank() || mailSender == null) return false;
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
             String from = (fromOverride != null && !fromOverride.isBlank()) ? fromOverride.trim() : (fromEmail == null ? "" : fromEmail.trim());
             if (!from.isBlank()) msg.setFrom(from);
             msg.setTo(to);
+            if (replyTo != null && !replyTo.isBlank()) {
+                msg.setReplyTo(replyTo.trim());
+            }
             msg.setSubject(subject);
             msg.setText(body);
             mailSender.send(msg);
             return true;
-        } catch (Exception ignored) {
-            // Keep primary flow working even if mail config is missing.
+        } catch (Exception e) {
+            log.warn("Mail send failed: to={} subject={} — {}", to, subject, e.getMessage());
             return false;
         }
     }
