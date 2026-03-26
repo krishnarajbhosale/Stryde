@@ -89,23 +89,56 @@ public class EasebuzzService {
                 .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
 
+        // NEVER follow redirects: if the gateway 302s to HTML checkout, the client would read HTML
+        // and JSON parsing could go wrong; we only accept JSON body or a clear Location /pay/{token}.
         HttpResponse<String> response = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build()
                 .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
-        String raw = response.body();
-        if (raw == null || raw.isBlank()) {
-            throw new IllegalStateException("Easebuzz returned empty response (HTTP " + response.statusCode() + ")");
+        int httpStatus = response.statusCode();
+        String raw = response.body() == null ? "" : response.body();
+
+        if (httpStatus >= 300 && httpStatus < 400) {
+            String loc = response.headers().firstValue("Location").orElse("").trim();
+            String fromRedirect = resolveCheckoutUrlFromLocation(loc);
+            if (fromRedirect != null) {
+                log.info("Easebuzz initiate redirect → checkout (token length inferred from URL)");
+                return fromRedirect;
+            }
+            log.warn("Easebuzz HTTP {} Location={} body prefix={}", httpStatus, loc, abbreviate(raw, 200));
+            throw new IllegalStateException("Payment gateway redirect had no valid checkout URL.");
         }
 
-        JsonNode root = JSON.readTree(raw);
+        if (httpStatus != 200) {
+            log.warn("Easebuzz HTTP {} body prefix={}", httpStatus, abbreviate(raw, 400));
+            throw new IllegalStateException("Payment gateway returned HTTP " + httpStatus);
+        }
+
+        if (raw.isBlank()) {
+            throw new IllegalStateException("Easebuzz returned empty body (HTTP 200)");
+        }
+
+        String trimmed = raw.trim();
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+            log.error("Easebuzz expected JSON but got non-JSON (HTML/error page?). prefix={}", abbreviate(raw, 500));
+            throw new IllegalStateException("Payment gateway returned non-JSON. Verify key, salt, payment_category, and test vs live URL.");
+        }
+
+        JsonNode root;
+        try {
+            root = JSON.readTree(raw);
+        } catch (Exception e) {
+            log.error("Easebuzz JSON parse failed: {}", abbreviate(raw, 400));
+            throw new IllegalStateException("Could not parse payment gateway response.");
+        }
+
         int st = parseEasebuzzStatus(root.get("status"));
         if (st == 1) {
             String accessKey = extractAccessKeyFromInitResponse(root);
             if (!isPlausibleEasebuzzAccessKey(accessKey)) {
-                log.error("Easebuzz returned success but data is not a valid access key (rejecting unsafe redirect). Body snippet: {}",
-                        raw.length() > 240 ? raw.substring(0, 240) + "…" : raw);
+                log.error("Easebuzz success but invalid access key. Body snippet: {}", abbreviate(raw, 400));
                 throw new IllegalStateException("Invalid payment session token from gateway. Check API response format or contact Easebuzz.");
             }
             log.info("Easebuzz initiate OK, checkout token length={}", accessKey.length());
@@ -115,8 +148,48 @@ public class EasebuzzService {
         if (err.isBlank()) {
             err = root.path("data").asText("Easebuzz declined initiate");
         }
-        log.warn("Easebuzz initiate failed: http={} body={}", response.statusCode(), raw.length() > 500 ? raw.substring(0, 500) + "…" : raw);
+        log.warn("Easebuzz initiate failed: body={}", abbreviate(raw, 500));
         throw new IllegalArgumentException(err);
+    }
+
+    private String resolveCheckoutUrlFromLocation(String location) {
+        if (location == null || location.isBlank()) {
+            return null;
+        }
+        String loc = location.trim();
+        URI u;
+        try {
+            if (loc.startsWith("http://") || loc.startsWith("https://")) {
+                u = URI.create(loc);
+            } else if (loc.startsWith("/")) {
+                u = URI.create(getPayHostBase() + loc);
+            } else {
+                return null;
+            }
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        String path = u.getPath();
+        if (path == null || !path.startsWith("/pay/")) {
+            return null;
+        }
+        String token = path.substring("/pay/".length());
+        int q = token.indexOf('?');
+        if (q >= 0) {
+            token = token.substring(0, q);
+        }
+        if (!isPlausibleEasebuzzAccessKey(token)) {
+            return null;
+        }
+        return getPayHostBase() + "/pay/" + token;
+    }
+
+    private static String abbreviate(String s, int max) {
+        if (s == null) {
+            return "";
+        }
+        String t = s.replaceAll("\\s+", " ").trim();
+        return t.length() <= max ? t : t.substring(0, max) + "…";
     }
 
     private static String encode(String s) {
