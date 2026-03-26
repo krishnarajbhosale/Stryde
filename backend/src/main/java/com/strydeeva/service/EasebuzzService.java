@@ -1,7 +1,11 @@
 package com.strydeeva.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -10,6 +14,8 @@ import java.util.Map;
 
 @Service
 public class EasebuzzService {
+
+    private static final Logger log = LoggerFactory.getLogger(EasebuzzService.class);
 
     private final String env;
     private final String key;
@@ -22,6 +28,19 @@ public class EasebuzzService {
         this.env = env == null ? "prod" : env.trim().toLowerCase();
         this.key = key == null ? "" : key.trim();
         this.salt = salt == null ? "" : salt.trim();
+    }
+
+    /**
+     * Log effective config at startup (no secret values). Use server logs to confirm
+     * prod vs test URL and that key/salt are not empty/overridden wrongly.
+     */
+    @PostConstruct
+    public void logEasebuzzBootstrap() {
+        log.info("Easebuzz init: paymentUrl={} envSetting={} keyLength={} saltLength={}",
+                getPaymentUrl(), env, key.length(), salt.length());
+        if (key.isEmpty() || salt.isEmpty()) {
+            log.warn("Easebuzz key or salt is empty — check application.properties, profiles, and env vars (EASEBUZZ_KEY / EASEBUZZ_SALT).");
+        }
     }
 
     public String getPaymentUrl() {
