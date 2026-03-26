@@ -297,12 +297,17 @@ public class EasebuzzService {
         String udf3 = nullToEmpty(responseFields.get("udf3"));
         String udf4 = nullToEmpty(responseFields.get("udf4"));
         String udf5 = nullToEmpty(responseFields.get("udf5"));
+        String udf6 = nullToEmpty(responseFields.get("udf6"));
+        String udf7 = nullToEmpty(responseFields.get("udf7"));
+        String udf8 = nullToEmpty(responseFields.get("udf8"));
+        String udf9 = nullToEmpty(responseFields.get("udf9"));
+        String udf10 = nullToEmpty(responseFields.get("udf10"));
         String postedHash = nullToEmpty(responseFields.get("hash"));
 
-        // Reverse hash:
-        // salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
-        String data = salt + "|" + status
-                + "||||||"
+        // Reverse hash (Easebuzz docs):
+        // salt|status|udf10|udf9|udf8|udf7|udf6|udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
+        String data = salt + "|" + status + "|"
+                + udf10 + "|" + udf9 + "|" + udf8 + "|" + udf7 + "|" + udf6 + "|"
                 + udf5 + "|" + udf4 + "|" + udf3 + "|" + udf2 + "|" + udf1 + "|"
                 + email + "|" + firstname + "|" + productinfo + "|" + amount + "|" + txnid + "|" + key;
 
