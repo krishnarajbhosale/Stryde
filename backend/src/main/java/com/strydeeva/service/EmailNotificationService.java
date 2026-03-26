@@ -57,6 +57,19 @@ public class EmailNotificationService {
         sendEmailSafe(adminEmail, "Wallet Credit Processed", adminBody, supportEmail);
     }
 
+    public void sendOrderConfirmedEmail(String customerEmail, String customerName, String orderNumber) {
+        String name = (customerName == null || customerName.isBlank()) ? "Customer" : customerName.trim();
+        String ord = (orderNumber == null || orderNumber.isBlank()) ? "" : orderNumber.trim();
+        String subject = ord.isBlank() ? "Order Confirmed" : ("Order Confirmed - " + ord);
+        String body = "Hi " + name + ",\n\n"
+                + "Your order has been confirmed"
+                + (ord.isBlank() ? "" : (" (" + ord + ")"))
+                + ".\n\n"
+                + "You can track your order anytime on our website.\n\n"
+                + "Team Strydeeva";
+        sendEmailSafe(customerEmail, subject, body, supportEmail);
+    }
+
     public boolean sendOtpEmail(String to, String otp) {
         String body = "Hi,\n\n"
                 + "Your Strydeeva login code is: " + otp + "\n\n"

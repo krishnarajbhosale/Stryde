@@ -21,12 +21,42 @@ function PaymentReturnPage() {
   }, [location.search])
 
   const isSuccess = paymentResult.status === 'success'
+  const [invoiceDownloaded, setInvoiceDownloaded] = useState(false)
 
   useEffect(() => {
     if (isSuccess) {
       clearCart()
     }
   }, [isSuccess, clearCart])
+
+  useEffect(() => {
+    if (!isSuccess) return
+    if (invoiceDownloaded) return
+    if (!paymentResult.orderId || !paymentResult.invoiceToken) return
+
+    let cancelled = false
+    const download = async () => {
+      try {
+        const res = await fetch(`/api/orders/${paymentResult.orderId}/invoice.pdf?token=${encodeURIComponent(paymentResult.invoiceToken)}`)
+        if (!res.ok) return
+        const blob = await res.blob()
+        if (cancelled) return
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `invoice-${paymentResult.orderNumber || paymentResult.orderId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+        setInvoiceDownloaded(true)
+      } catch {
+        // ignore
+      }
+    }
+    download()
+    return () => { cancelled = true }
+  }, [isSuccess, invoiceDownloaded, paymentResult.orderId, paymentResult.invoiceToken, paymentResult.orderNumber])
 
   useEffect(() => {
     setSecondsLeft(6)

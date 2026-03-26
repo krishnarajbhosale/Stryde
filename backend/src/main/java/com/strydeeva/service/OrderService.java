@@ -30,6 +30,7 @@ public class OrderService {
     private final ProductSizeInventoryRepository productSizeInventoryRepository;
     private final InvoiceTokenService invoiceTokenService;
     private final WalletService walletService;
+    private final EmailNotificationService emailNotificationService;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
             .withZone(ZoneId.systemDefault());
 
@@ -37,12 +38,14 @@ public class OrderService {
             CustomerRepository customerRepository,
             ProductSizeInventoryRepository productSizeInventoryRepository,
             InvoiceTokenService invoiceTokenService,
-            WalletService walletService) {
+            WalletService walletService,
+            EmailNotificationService emailNotificationService) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.productSizeInventoryRepository = productSizeInventoryRepository;
         this.invoiceTokenService = invoiceTokenService;
         this.walletService = walletService;
+        this.emailNotificationService = emailNotificationService;
     }
 
     public List<OrderResponseDto> getConfirmedOrders() {
@@ -199,6 +202,8 @@ public class OrderService {
         dto.setItems(itemDtos);
         // one-time token to download invoice PDF immediately after placing order
         dto.setInvoiceToken(invoiceTokenService.createTokenForOrder(order.getId()));
+        // Send order confirmation email (best-effort)
+        emailNotificationService.sendOrderConfirmedEmail(order.getCustomerEmail(), order.getCustomerName(), order.getOrderNumber());
         return dto;
     }
 
@@ -289,8 +294,10 @@ public class OrderService {
                         productSizeInventoryRepository.save(inv);
                     });
         }
-
-        return invoiceTokenService.createTokenForOrder(order.getId());
+        String token = invoiceTokenService.createTokenForOrder(order.getId());
+        // Send order confirmation email (best-effort)
+        emailNotificationService.sendOrderConfirmedEmail(order.getCustomerEmail(), order.getCustomerName(), order.getOrderNumber());
+        return token;
     }
 
     public byte[] exportConfirmedOrdersToExcel() {
