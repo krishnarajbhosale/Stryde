@@ -1,15 +1,34 @@
 package com.strydeeva.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CustomSizeRequestDto {
 
+    @NotBlank(message = "Bust is required")
     private String bust;
+
+    @NotBlank(message = "Waist is required")
     private String waist;
+
+    @NotBlank(message = "Hip is required")
     private String hip;
+
+    @NotBlank(message = "Shoulder is required")
     private String shoulder;
+
+    @NotBlank(message = "Armhole is required")
     private String armhole;
+
+    @NotBlank(message = "Sleeve length is required")
     private String sleeveLength;
+
+    @NotBlank(message = "Sleeve round (bicep) is required")
     private String sleeveRoundBicep;
+
+    @NotBlank(message = "Height is required")
     private String height;
+
+    @NotBlank(message = "Remark is required")
     private String remark;
 
     public String getBust() { return bust; }

@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private static final String PRODUCT_PRIMARY_IMAGE_PATH = "/api/products/";
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final ProductSizeInventoryRepository productSizeInventoryRepository;
@@ -121,6 +122,9 @@ public class OrderService {
         order.setShippingFee(request.getShippingFee() != null ? request.getShippingFee() : BigDecimal.ZERO);
         order.setCodCharge(request.getCodCharge() != null ? request.getCodCharge() : BigDecimal.ZERO);
         order.setGstAmount(request.getGstAmount() != null ? request.getGstAmount() : BigDecimal.ZERO);
+        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
+            order.setPaymentMethod(request.getPaymentMethod().trim().toLowerCase());
+        }
         Long customerId = null;
         if (!normalizedEmail.isBlank()) {
             Customer customer = customerRepository.findByEmailIgnoreCase(normalizedEmail).orElseGet(() -> {
@@ -192,6 +196,8 @@ public class OrderService {
         dto.setWalletDiscount(order.getWalletDiscount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setPaymentProvider(order.getPaymentProvider());
         dto.setCreatedAt(order.getCreatedAt());
         List<OrderResponseDto.OrderItemDto> itemDtos = new ArrayList<>();
         for (CreateOrderRequestDto.OrderItemRequestDto itemReq : request.getItems()) {
@@ -200,7 +206,9 @@ public class OrderService {
                     itemReq.getSizeName() != null ? itemReq.getSizeName() : "",
                     Math.max(1, itemReq.getQuantity()),
                     itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO,
-                    itemReq.getCustomSizeId()));
+                    itemReq.getCustomSizeId(),
+                    itemReq.getProductId(),
+                    primaryProductImageUrl(itemReq.getProductId())));
         }
         dto.setItems(itemDtos);
         // one-time token to download invoice PDF immediately after placing order
@@ -395,6 +403,8 @@ public class OrderService {
         dto.setWalletDiscount(order.getWalletDiscount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setPaymentProvider(order.getPaymentProvider());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setItems(order.getItems().stream()
                 .map(item -> new OrderResponseDto.OrderItemDto(
@@ -402,9 +412,17 @@ public class OrderService {
                         item.getSizeName(),
                         item.getQuantity(),
                         item.getUnitPrice(),
-                        item.getCustomSizeId()))
+                        item.getCustomSizeId(),
+                        item.getProductId(),
+                        primaryProductImageUrl(item.getProductId())))
                 .collect(Collectors.toList()));
         return dto;
+    }
+
+    /** Public storefront path for the first product image (same as ProductController). */
+    private static String primaryProductImageUrl(Long productId) {
+        if (productId == null) return null;
+        return PRODUCT_PRIMARY_IMAGE_PATH + productId + "/image/0";
     }
 
     /** Matches PaymentPage/CartPage: sum(items) − promo, GST 12% rounded to whole rupees, + shipping + COD. */

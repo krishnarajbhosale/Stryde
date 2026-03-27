@@ -25,6 +25,10 @@ public class OrderResponseDto {
     private String awbNumber;
     private String invoiceToken;
     private String status;
+    /** Checkout / tender type, e.g. {@code cod}, {@code wallet}, {@code upi}. */
+    private String paymentMethod;
+    /** Gateway when prepaid, e.g. {@code easebuzz}. */
+    private String paymentProvider;
     private Instant createdAt;
     private List<OrderItemDto> items = new ArrayList<>();
 
@@ -34,15 +38,28 @@ public class OrderResponseDto {
         private int quantity;
         private BigDecimal unitPrice;
         private Long customSizeId;
+        /** Set when the line item is linked to a catalog product (for thumbnail URL). */
+        private Long productId;
+        /** First catalog image, e.g. {@code /api/products/12/image/0}; null if no product id. */
+        private String productImageUrl;
 
         public OrderItemDto() {}
 
-        public OrderItemDto(String productName, String sizeName, int quantity, BigDecimal unitPrice, Long customSizeId) {
+        public OrderItemDto(
+                String productName,
+                String sizeName,
+                int quantity,
+                BigDecimal unitPrice,
+                Long customSizeId,
+                Long productId,
+                String productImageUrl) {
             this.productName = productName;
             this.sizeName = sizeName;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
             this.customSizeId = customSizeId;
+            this.productId = productId;
+            this.productImageUrl = productImageUrl;
         }
 
         public String getProductName() { return productName; }
@@ -55,6 +72,10 @@ public class OrderResponseDto {
         public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
         public Long getCustomSizeId() { return customSizeId; }
         public void setCustomSizeId(Long customSizeId) { this.customSizeId = customSizeId; }
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+        public String getProductImageUrl() { return productImageUrl; }
+        public void setProductImageUrl(String productImageUrl) { this.productImageUrl = productImageUrl; }
     }
 
     public Long getId() { return id; }
@@ -95,6 +116,10 @@ public class OrderResponseDto {
     public void setInvoiceToken(String invoiceToken) { this.invoiceToken = invoiceToken; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public String getPaymentProvider() { return paymentProvider; }
+    public void setPaymentProvider(String paymentProvider) { this.paymentProvider = paymentProvider; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public List<OrderItemDto> getItems() { return items; }

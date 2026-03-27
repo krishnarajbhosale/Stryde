@@ -493,6 +493,22 @@ function ProductDetail() {
                 onSubmit={async (e) => {
                   e.preventDefault()
                   setCustomSizeError('')
+                  const requiredKeys = [
+                    'bust',
+                    'waist',
+                    'hip',
+                    'shoulder',
+                    'armhole',
+                    'sleeveLength',
+                    'sleeveRoundBicep',
+                    'height',
+                    'remark',
+                  ]
+                  const empty = requiredKeys.filter((k) => !String(customSizeForm[k] ?? '').trim())
+                  if (empty.length > 0) {
+                    setCustomSizeError('Please fill in all fields.')
+                    return
+                  }
                   setCustomSizeSubmitting(true)
                   try {
                     const res = await createCustomSize(customSizeForm)
@@ -518,34 +534,43 @@ function ProductDetail() {
                     { name: 'sleeveRoundBicep', label: 'Sleeve Round (Bicep)' },
                   ].map(({ name, label }) => (
                     <div key={name}>
-                      <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">{label}</label>
+                      <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">
+                        {label} <span className="text-red-400">*</span>
+                      </label>
                       <input
                         type="text"
+                        required
                         value={customSizeForm[name]}
                         onChange={(e) => setCustomSizeForm((f) => ({ ...f, [name]: e.target.value }))}
                         className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7]"
-                        placeholder="—"
+                        placeholder="Required"
                       />
                     </div>
                   ))}
                 </div>
                 <div className="mb-4">
-                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">Height</label>
+                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">
+                    Height <span className="text-red-400">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     value={customSizeForm.height}
                     onChange={(e) => setCustomSizeForm((f) => ({ ...f, height: e.target.value }))}
                     className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7]"
-                    placeholder="Mention your height"
+                    placeholder="Your height (required)"
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">Remark</label>
+                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">
+                    Remark <span className="text-red-400">*</span>
+                  </label>
                   <textarea
+                    required
                     value={customSizeForm.remark}
                     onChange={(e) => setCustomSizeForm((f) => ({ ...f, remark: e.target.value }))}
                     className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7] resize-none"
-                    placeholder="Any special instructions or notes"
+                    placeholder="Special instructions or notes (required)"
                     rows={3}
                   />
                 </div>

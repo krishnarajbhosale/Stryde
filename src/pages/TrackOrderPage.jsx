@@ -213,12 +213,43 @@ function TrackOrderPage() {
                           </a>
                         )}
                       </p>
-                      <div className="mt-2 space-y-1">
-                        {(o.items || []).map((it, idx) => (
-                          <p key={`${o.id}-${idx}`} className="text-xs text-[#E5E5E5]/80">
-                            {it.productName} - {it.sizeName} x {it.quantity}
-                          </p>
-                        ))}
+                      <div className="mt-3 space-y-3">
+                        {(o.items || []).map((it, idx) => {
+                          const sizeLabel =
+                            it.sizeName === 'Custom' || it.customSizeId != null
+                              ? 'Custom'
+                              : it.sizeName || '—'
+                          return (
+                            <div
+                              key={`${o.id}-${idx}`}
+                              className="flex gap-3 items-start border-t border-[#E5E5E5]/15 first:border-t-0 first:pt-0 pt-3"
+                            >
+                              <div className="w-20 h-20 shrink-0 bg-[#2a2a2a] border border-[#E5E5E5]/20 overflow-hidden">
+                                {it.productImageUrl ? (
+                                  <img
+                                    src={it.productImageUrl}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null
+                                      e.currentTarget.style.display = 'none'
+                                    }}
+                                  />
+                                ) : null}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm text-[#E5E5E5] font-medium leading-snug">{it.productName}</p>
+                                <p className="text-xs text-[#D1C7B7] mt-1 uppercase tracking-wide">
+                                  Size: <span className="text-[#E5E5E5] normal-case tracking-normal">{sizeLabel}</span>
+                                  {it.customSizeId != null && (
+                                    <span className="text-[#E5E5E5]/70 normal-case"> (custom fit)</span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-[#E5E5E5]/65 mt-0.5">Qty: {it.quantity}</p>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}

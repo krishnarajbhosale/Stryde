@@ -1,6 +1,38 @@
 import { useState, useEffect } from 'react'
 import { getOrders, downloadOrdersExcel, downloadOrderInvoicePdf, getCustomSizeById } from '../../api/adminApi'
 
+/** Human-readable payment type for admin list/detail. */
+function orderPaymentLabel(order) {
+  const method = (order.paymentMethod || '').toLowerCase().trim()
+  const provider = (order.paymentProvider || '').toLowerCase().trim()
+  const codCh = Number(order.codCharge) || 0
+  if (method === 'cod' || (!method && codCh > 0)) return 'COD'
+  if (method === 'wallet') return 'Prepaid (Wallet)'
+  if (provider === 'easebuzz' || method) {
+    if (provider === 'easebuzz') return 'Prepaid (Online · Easebuzz)'
+    return `Prepaid (Online · ${method})`
+  }
+  return '—'
+}
+
+function OrderLineThumb({ item }) {
+  return (
+    <div className="w-10 h-10 shrink-0 bg-[#222] border border-[#E5E5E5]/20 overflow-hidden">
+      {item.productImageUrl ? (
+        <img
+          src={item.productImageUrl}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      ) : null}
+    </div>
+  )
+}
+
 export default function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -100,6 +132,7 @@ export default function AdminOrders() {
                 <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Order #</th>
                 <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Customer</th>
                 <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Amount</th>
+                <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Payment</th>
                 <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Date</th>
                 <th className="py-2 pr-4 text-[#E5E5E5]/80 uppercase tracking-wide">Items</th>
                 <th className="py-2 text-[#E5E5E5]/80 uppercase tracking-wide">Actions</th>
@@ -120,19 +153,26 @@ export default function AdminOrders() {
                     )}
                   </td>
                   <td className="py-3 pr-4 text-[#E5E5E5]">₹{o.totalAmount != null ? Number(o.totalAmount).toLocaleString('en-IN') : '—'}</td>
+                  <td className="py-3 pr-4 text-[#E5E5E5]/90 text-xs whitespace-nowrap">{orderPaymentLabel(o)}</td>
                   <td className="py-3 pr-4 text-[#E5E5E5]/80">
                     {o.createdAt ? new Date(o.createdAt).toLocaleString() : '—'}
                   </td>
                   <td className="py-3 pr-4 text-[#E5E5E5]/80">
-                    {o.items && o.items.length > 0
-                      ? o.items.map((i, idx) => (
-                          <span key={idx}>
-                            {i.productName} ({i.sizeName}) × {i.quantity}
-                            {i.customSizeId ? ' [Custom]' : ''}
-                            {idx < o.items.length - 1 ? ', ' : ''}
-                          </span>
-                        ))
-                      : '—'}
+                    {o.items && o.items.length > 0 ? (
+                      <ul className="list-none p-0 m-0 space-y-2 max-w-[14rem]">
+                        {o.items.map((i, idx) => (
+                          <li key={idx} className="flex gap-2 items-center text-xs">
+                            <OrderLineThumb item={i} />
+                            <span>
+                              {i.productName} ({i.sizeName}) × {i.quantity}
+                              {i.customSizeId ? ' [Custom]' : ''}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                   <td className="py-3 text-[#E5E5E5]">
                     <div className="flex flex-wrap gap-2">
@@ -208,6 +248,7 @@ export default function AdminOrders() {
                 <div>
                   <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-1">Order Info</p>
                   <p>Status: <span className="uppercase">{selectedOrder.status}</span></p>
+                  <p>Payment: <span className="text-[#E5E5E5]">{orderPaymentLabel(selectedOrder)}</span></p>
                   <p>
                     Date:{' '}
                     {selectedOrder.createdAt
@@ -231,14 +272,29 @@ export default function AdminOrders() {
 
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-2">Items</p>
-                <ul className="space-y-1 list-none p-0 m-0">
+                <ul className="space-y-3 list-none p-0 m-0">
                   {selectedOrder.items?.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="font-medium text-[#E5E5E5]">{item.productName}</span>{' '}
-                      <span className="uppercase">({item.sizeName})</span>{' '}
-                      × {item.quantity} — ₹
-                      {item.unitPrice != null ? Number(item.unitPrice).toLocaleString('en-IN') : '0'}
-                      {item.customSizeId ? ' [Custom]' : ''}
+                    <li key={idx} className="flex gap-3 items-start">
+                      <div className="w-14 h-14 shrink-0 bg-[#222] border border-[#E5E5E5]/20 overflow-hidden">
+                        {item.productImageUrl ? (
+                          <img
+                            src={item.productImageUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        ) : null}
+                      </div>
+                      <div>
+                        <span className="font-medium text-[#E5E5E5]">{item.productName}</span>{' '}
+                        <span className="uppercase">({item.sizeName})</span>{' '}
+                        × {item.quantity} — ₹
+                        {item.unitPrice != null ? Number(item.unitPrice).toLocaleString('en-IN') : '0'}
+                        {item.customSizeId ? ' [Custom]' : ''}
+                      </div>
                     </li>
                   ))}
                 </ul>

@@ -183,6 +183,8 @@ function PaymentPage() {
         gstAmount: Number(gstAmount || 0),
         walletDiscount: Number(effectiveWallet.toFixed(2)),
         totalAmount: Number(payableTotal.toFixed(2)),
+        paymentMethod:
+          payableTotal <= 0 && effectiveWallet > 0 ? 'wallet' : paymentMethod === 'cod' ? 'cod' : undefined,
         items: cartItemsWithProduct.map((item) => {
           const obj = {
             productId: Number(item.productId),
