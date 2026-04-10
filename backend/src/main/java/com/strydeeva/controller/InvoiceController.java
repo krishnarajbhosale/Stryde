@@ -32,7 +32,7 @@ public class InvoiceController {
         if (!invoiceTokenService.isValid(id, token)) {
             return ResponseEntity.status(401).build();
         }
-        Order order = orderRepository.findById(id).orElse(null);
+        Order order = orderRepository.findByIdWithItems(id).orElse(null);
         if (order == null) return ResponseEntity.notFound().build();
         byte[] pdf = invoicePdfService.generate(order);
         HttpHeaders headers = new HttpHeaders();

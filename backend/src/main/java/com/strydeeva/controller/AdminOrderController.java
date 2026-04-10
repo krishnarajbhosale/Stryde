@@ -45,7 +45,7 @@ public class AdminOrderController {
 
     @GetMapping("/{id}/invoice.pdf")
     public ResponseEntity<byte[]> invoice(@PathVariable Long id) {
-        Order order = orderRepository.findById(id).orElse(null);
+        Order order = orderRepository.findByIdWithItems(id).orElse(null);
         if (order == null) return ResponseEntity.notFound().build();
         byte[] pdf = invoicePdfService.generate(order);
         HttpHeaders headers = new HttpHeaders();

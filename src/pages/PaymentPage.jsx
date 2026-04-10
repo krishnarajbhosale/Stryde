@@ -193,11 +193,13 @@ function PaymentPage() {
             quantity: Math.max(1, Number(item.quantity)),
             unitPrice: Number(item.product?.actualPrice) || 0,
           }
-          if (item.customSizeId != null) obj.customSizeId = Number(item.customSizeId)
-          else {
-            const h = String(item.customerHeight || '').trim()
-            if (h) obj.customerHeight = h
+          if (item.customSizeId != null && item.customSizeId !== '') {
+            obj.customSizeId = Number(item.customSizeId)
+            return obj
           }
+          // Standard sizes: persist height on order line (backend + invoice + admin).
+          const h = String(item.customerHeight ?? item.height ?? '').trim()
+          if (h) obj.customerHeight = h
           return obj
         }),
       }
