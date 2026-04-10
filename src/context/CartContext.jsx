@@ -5,11 +5,13 @@ const CartContext = createContext(null)
 function cartReducer(state, action) {
   switch (action.type) {
     case 'ADD': {
-      const { productId, size = 'M', customSizeId } = action.payload
+      const { productId, size = 'M', customSizeId, customerHeight = '' } = action.payload
+      const hNorm = customSizeId != null ? '' : String(customerHeight || '').trim()
       const existing = state.findIndex((i) => {
         if (i.productId !== productId) return false
         if (customSizeId != null) return i.customSizeId === customSizeId
-        return i.size === size && i.customSizeId == null
+        const ih = String(i.customerHeight || '').trim()
+        return i.size === size && i.customSizeId == null && ih === hNorm
       })
       if (existing >= 0) {
         const next = [...state]
@@ -18,6 +20,7 @@ function cartReducer(state, action) {
       }
       const item = { productId, size: customSizeId != null ? 'Custom' : size, quantity: 1 }
       if (customSizeId != null) item.customSizeId = customSizeId
+      else if (hNorm) item.customerHeight = hNorm
       return [...state, item]
     }
     case 'REMOVE':
@@ -31,7 +34,13 @@ function cartReducer(state, action) {
     case 'UPDATE_SIZE':
       return state.map((item, i) =>
         i === action.payload.index
-          ? { ...item, size: action.payload.size }
+          ? { ...item, size: action.payload.size, customerHeight: '' }
+          : item
+      )
+    case 'UPDATE_HEIGHT':
+      return state.map((item, i) =>
+        i === action.payload.index
+          ? { ...item, customerHeight: action.payload.customerHeight }
           : item
       )
     case 'CLEAR':
@@ -46,8 +55,8 @@ export function CartProvider({ children }) {
   const [promo, setPromo] = useState(null)
   const [showAddedToCart, setShowAddedToCart] = useState(false)
 
-  const addToCart = useCallback((productId, size = 'M', customSizeId = null) => {
-    dispatch({ type: 'ADD', payload: { productId, size, customSizeId } })
+  const addToCart = useCallback((productId, size = 'M', customSizeId = null, customerHeight = '') => {
+    dispatch({ type: 'ADD', payload: { productId, size, customSizeId, customerHeight } })
     setShowAddedToCart(true)
   }, [])
 
@@ -66,6 +75,10 @@ export function CartProvider({ children }) {
     dispatch({ type: 'UPDATE_SIZE', payload: { index, size } })
   }
 
+  const updateCustomerHeight = (index, customerHeight) => {
+    dispatch({ type: 'UPDATE_HEIGHT', payload: { index, customerHeight } })
+  }
+
   const clearCart = () => {
     dispatch({ type: 'CLEAR' })
     setPromo(null)
@@ -81,6 +94,7 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         updateSize,
+        updateCustomerHeight,
         clearCart,
         showAddedToCart,
         dismissAddedToCart,

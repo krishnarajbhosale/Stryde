@@ -27,6 +27,7 @@ function CheckoutPage() {
   const [authDevOtp, setAuthDevOtp] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [pendingProceed, setPendingProceed] = useState(false)
+  const [checkoutHeightError, setCheckoutHeightError] = useState('')
   const [form, setForm] = useState({
     email: '',
     mobile: '',
@@ -122,6 +123,14 @@ function CheckoutPage() {
 
   const handlePlaceOrder = (e) => {
     e.preventDefault()
+    setCheckoutHeightError('')
+    const missing = cartItemsWithProduct.some(
+      (it) => !it.customSizeId && it.size !== 'Custom' && !String(it.customerHeight || '').trim(),
+    )
+    if (missing) {
+      setCheckoutHeightError('Please enter height for each standard-size item in your bag.')
+      return
+    }
     if (!isCustomerLoggedIn()) {
       setPendingProceed(true)
       setAuthOpen(true)
@@ -157,6 +166,11 @@ function CheckoutPage() {
                     <span className="text-xs uppercase bg-[#E8E4DF] text-[#333] px-2.5 py-1.5 rounded-sm">
                       QTY: {item.quantity}
                     </span>
+                    {item.size !== 'Custom' && !item.customSizeId && String(item.customerHeight || '').trim() ? (
+                      <span className="text-xs uppercase border border-[#E5E5E5]/35 text-white px-2.5 py-1.5 rounded-sm">
+                        HEIGHT: {String(item.customerHeight).trim()}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="text-sm font-medium text-[#E5E5E5] mt-2">
                     {p.priceStrikethrough && <span className="line-through text-[#E5E5E5]/60 mr-2">{p.priceStrikethrough}</span>}
@@ -343,6 +357,7 @@ function CheckoutPage() {
                 <OrderSummaryBlock />
               </div>
 
+              {checkoutHeightError ? <p className="text-xs text-red-400 mt-6">{checkoutHeightError}</p> : null}
               <button
                 type="submit"
                 className="w-full mt-8 py-3.5 px-4 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 transition-colors"
@@ -453,6 +468,7 @@ function CheckoutPage() {
                 </div>
               </section>
 
+              {checkoutHeightError ? <p className="text-xs text-red-400 pt-4">{checkoutHeightError}</p> : null}
               <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/20">
                 <Link
                   to="/cart"

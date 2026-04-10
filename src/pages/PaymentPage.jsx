@@ -194,6 +194,10 @@ function PaymentPage() {
             unitPrice: Number(item.product?.actualPrice) || 0,
           }
           if (item.customSizeId != null) obj.customSizeId = Number(item.customSizeId)
+          else {
+            const h = String(item.customerHeight || '').trim()
+            if (h) obj.customerHeight = h
+          }
           return obj
         }),
       }

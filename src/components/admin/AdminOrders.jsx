@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getOrders, downloadOrdersExcel, downloadOrderInvoicePdf, getCustomSizeById } from '../../api/adminApi'
+import { formatOrderInvoiceNumber } from '../../utils/orderInvoice'
 
 /** Human-readable payment type for admin list/detail. */
 function orderPaymentLabel(order) {
@@ -164,8 +165,13 @@ export default function AdminOrders() {
                           <li key={idx} className="flex gap-2 items-center text-xs">
                             <OrderLineThumb item={i} />
                             <span>
-                              {i.productName} ({i.sizeName}) × {i.quantity}
-                              {i.customSizeId ? ' [Custom]' : ''}
+                              <span className="text-[#E5E5E5]/80">
+                                {i.productName} ({i.sizeName}) × {i.quantity}
+                                {i.customSizeId ? ' [Custom]' : ''}
+                              </span>
+                              {i.customerHeight && String(i.customerHeight).trim() ? (
+                                <span className="text-white">{` · H: ${String(i.customerHeight).trim()}`}</span>
+                              ) : null}
                             </span>
                           </li>
                         ))}
@@ -215,7 +221,10 @@ export default function AdminOrders() {
           <div className="bg-[#111] border border-[#E5E5E5]/40 max-w-3xl w-full max-h-[90vh] overflow-auto rounded shadow-xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E5E5]/30">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-[#E5E5E5]">
-                Order Details #{selectedOrder.orderNumber || selectedOrder.id}
+                <span className="block">Order Details #{selectedOrder.orderNumber || selectedOrder.id}</span>
+                <span className="block text-xs font-normal normal-case text-[#E5E5E5]/85 mt-1 font-mono tracking-normal">
+                  Invoice: {formatOrderInvoiceNumber(selectedOrder)}
+                </span>
               </h3>
               <div className="flex items-center gap-2">
                 <button
@@ -247,6 +256,12 @@ export default function AdminOrders() {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-1">Order Info</p>
+                  <p>
+                    Invoice no.:{' '}
+                    <span className="text-[#E5E5E5] font-mono text-xs">
+                      {formatOrderInvoiceNumber(selectedOrder)}
+                    </span>
+                  </p>
                   <p>Status: <span className="uppercase">{selectedOrder.status}</span></p>
                   <p>Payment: <span className="text-[#E5E5E5]">{orderPaymentLabel(selectedOrder)}</span></p>
                   <p>
@@ -294,6 +309,11 @@ export default function AdminOrders() {
                         × {item.quantity} — ₹
                         {item.unitPrice != null ? Number(item.unitPrice).toLocaleString('en-IN') : '0'}
                         {item.customSizeId ? ' [Custom]' : ''}
+                        {item.customerHeight && String(item.customerHeight).trim() ? (
+                          <span className="block text-white mt-0.5">
+                            Height: {String(item.customerHeight).trim()}
+                          </span>
+                        ) : null}
                       </div>
                     </li>
                   ))}
@@ -315,7 +335,7 @@ export default function AdminOrders() {
                       <p>Armhole: <span className="text-[#E5E5E5]">{selectedCustomSize.armhole || '—'}</span></p>
                       <p>Sleeve length: <span className="text-[#E5E5E5]">{selectedCustomSize.sleeveLength || '—'}</span></p>
                       <p>Sleeve round (bicep): <span className="text-[#E5E5E5]">{selectedCustomSize.sleeveRoundBicep || '—'}</span></p>
-                      <p>Height: <span className="text-[#E5E5E5]">{selectedCustomSize.height || '—'}</span></p>
+                      <p>Height: <span className="text-white">{selectedCustomSize.height || '—'}</span></p>
                       <p className="col-span-2 mt-2">
                         Remark:{' '}
                         <span className="text-[#E5E5E5]">

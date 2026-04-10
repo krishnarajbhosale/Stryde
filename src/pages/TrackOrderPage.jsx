@@ -245,6 +245,11 @@ function TrackOrderPage() {
                                     <span className="text-[#E5E5E5]/70 normal-case"> (custom fit)</span>
                                   )}
                                 </p>
+                                {it.customerHeight && String(it.customerHeight).trim() ? (
+                                  <p className="text-xs text-white mt-0.5">
+                                    Height: <span className="text-white">{String(it.customerHeight).trim()}</span>
+                                  </p>
+                                ) : null}
                                 <p className="text-xs text-[#E5E5E5]/65 mt-0.5">Qty: {it.quantity}</p>
                               </div>
                             </div>

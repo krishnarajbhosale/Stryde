@@ -28,6 +28,8 @@ function ProductDetail() {
   })
   const [customSizeSubmitting, setCustomSizeSubmitting] = useState(false)
   const [customSizeError, setCustomSizeError] = useState('')
+  const [sizeHeight, setSizeHeight] = useState('')
+  const [sizeHeightError, setSizeHeightError] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -50,7 +52,14 @@ function ProductDetail() {
     return () => { cancelled = true }
   }, [id])
 
-  const cartIndex = product ? cart.findIndex((item) => String(item.productId) === String(product.id) && item.size === selectedSize) : -1
+  const heightNormForCart = String(sizeHeight || '').trim()
+  const cartIndex = product
+    ? cart.findIndex((item) => {
+        if (String(item.productId) !== String(product.id)) return false
+        if (item.customSizeId != null) return false
+        return item.size === selectedSize && String(item.customerHeight || '').trim() === heightNormForCart
+      })
+    : -1
   const inCart = cartIndex >= 0
 
   const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
@@ -83,6 +92,16 @@ function ProductDetail() {
       if (inStock) setSelectedSize(inStock.sizeName)
     }
   }, [product?.id])
+
+  useEffect(() => {
+    setSizeHeight('')
+    setSizeHeightError('')
+  }, [product?.id])
+
+  useEffect(() => {
+    setSizeHeight('')
+    setSizeHeightError('')
+  }, [selectedSize])
 
   if (loading) {
     return (
@@ -256,6 +275,25 @@ function ProductDetail() {
               })()}
             </div>
 
+            <div className="mb-6">
+              <label htmlFor="pdp-size-height" className="block text-xs uppercase tracking-wide text-white mb-1.5">
+                Your height <span className="text-red-400">*</span>
+              </label>
+              <input
+                id="pdp-size-height"
+                type="text"
+                value={sizeHeight}
+                onChange={(e) => {
+                  setSizeHeight(e.target.value)
+                  setSizeHeightError('')
+                }}
+                placeholder="e.g. 5 ft 4 in or 162 cm"
+                className="w-full max-w-md bg-transparent border border-[#D1C7B7]/40 text-white placeholder:text-white/50 px-3 py-2.5 text-sm focus:outline-none focus:border-[#D1C7B7]"
+              />
+              {sizeHeightError ? <p className="text-red-400 text-xs mt-1.5">{sizeHeightError}</p> : null}
+              <p className="text-[10px] uppercase tracking-wide text-white/80 mt-1.5">Required for standard sizes (custom size has its own height field)</p>
+            </div>
+
             <div className="w-24 h-px bg-[#D1C7B7] mb-6" />
 
             {(() => {
@@ -275,7 +313,17 @@ function ProductDetail() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => (inCart ? removeFromCart(cartIndex) : addToCart(product.id, selectedSize))}
+                      onClick={() => {
+                        if (inCart) {
+                          removeFromCart(cartIndex)
+                          return
+                        }
+                        if (!String(sizeHeight || '').trim()) {
+                          setSizeHeightError('Please enter your height.')
+                          return
+                        }
+                        addToCart(product.id, selectedSize, null, sizeHeight.trim())
+                      }}
                       aria-label={inCart ? 'Remove from cart (undo)' : 'Add to cart'}
                       className={`w-full max-w-md py-3 px-4 text-sm font-medium tracking-wide uppercase border border-[#D1C7B7] transition-all duration-300 ease-out active:scale-[0.98] select-none ${
                         inCart
@@ -549,7 +597,7 @@ function ProductDetail() {
                   ))}
                 </div>
                 <div className="mb-4">
-                  <label className="block text-xs uppercase tracking-wide text-[#D1C7B7]/90 mb-1">
+                  <label className="block text-xs uppercase tracking-wide text-white mb-1">
                     Height <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -557,7 +605,7 @@ function ProductDetail() {
                     required
                     value={customSizeForm.height}
                     onChange={(e) => setCustomSizeForm((f) => ({ ...f, height: e.target.value }))}
-                    className="w-full bg-transparent border border-[#D1C7B7]/40 text-[#D1C7B7] px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7]"
+                    className="w-full bg-transparent border border-[#D1C7B7]/40 text-white placeholder:text-white/50 px-3 py-2 text-sm focus:outline-none focus:border-[#D1C7B7]"
                     placeholder="Your height (required)"
                   />
                 </div>

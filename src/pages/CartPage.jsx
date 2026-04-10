@@ -14,7 +14,8 @@ const SHIPPING_FEE = 100
 
 function CartPage() {
   const navigate = useNavigate()
-  const { cart, promo, setPromo, removeFromCart, updateQuantity, updateSize } = useCart()
+  const { cart, promo, setPromo, removeFromCart, updateQuantity, updateSize, updateCustomerHeight } = useCart()
+  const [cartHeightError, setCartHeightError] = useState('')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [promoInput, setPromoInput] = useState(promo?.code || '')
@@ -153,7 +154,7 @@ function CartPage() {
                   {cartItemsWithProduct.map((item, index) => {
                     const p = item.product
                     return (
-                      <div key={`${item.productId}-${item.size}-${index}`}>
+                      <div key={`${item.productId}-${item.size}-${String(item.customerHeight || '')}-${index}`}>
                         <div className="flex gap-3 md:gap-6 items-start py-5 md:py-6">
                           <div className="w-5 h-5 border border-[#E5E5E5] rounded flex-shrink-0 mt-2" aria-hidden />
                           <div className="w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36 flex-shrink-0 overflow-hidden bg-neutral-800">
@@ -185,6 +186,21 @@ function CartPage() {
                                     </option>
                                   ))}
                                 </select>
+                              )}
+                              {item.size !== 'Custom' && !item.customSizeId && (
+                                <label className="flex flex-col gap-1 min-w-[8rem]">
+                                  <span className="text-[10px] uppercase text-white">Height *</span>
+                                  <input
+                                    type="text"
+                                    value={item.customerHeight || ''}
+                                    onChange={(e) => {
+                                      setCartHeightError('')
+                                      updateCustomerHeight(index, e.target.value)
+                                    }}
+                                    placeholder="e.g. 5'4&quot;"
+                                    className="text-xs bg-black/50 border border-[#E5E5E5]/35 text-white placeholder:text-white/45 px-2 py-2 focus:outline-none rounded-sm"
+                                  />
+                                </label>
                               )}
                               <select
                                 value={item.quantity}
@@ -306,9 +322,20 @@ function CartPage() {
               <p className="text-xs text-[#D1C7B7]/80 mt-6 leading-relaxed">
                 BY PLACING THE ORDER, YOU AGREE TO STRYDEEVA'S TERMS OF USE AND PRIVACY POLICY.
               </p>
+              {cartHeightError ? <p className="text-xs text-red-400 mt-4">{cartHeightError}</p> : null}
               <button
                 type="button"
-                onClick={() => navigate('/checkout')}
+                onClick={() => {
+                  const missing = cartItemsWithProduct.some(
+                    (it) => !it.customSizeId && it.size !== 'Custom' && !String(it.customerHeight || '').trim(),
+                  )
+                  if (missing) {
+                    setCartHeightError('Please enter height for each item (standard sizes).')
+                    return
+                  }
+                  setCartHeightError('')
+                  navigate('/checkout')
+                }}
                 className="w-full mt-6 py-3 px-4 text-sm font-medium tracking-wide uppercase bg-[#D1C7B7] text-[#1a1a1a] hover:bg-[#D1C7B7]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={cartItemsWithProduct.length === 0}
               >
