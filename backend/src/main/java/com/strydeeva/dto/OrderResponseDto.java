@@ -50,6 +50,8 @@ public class OrderResponseDto {
         /** First catalog image, e.g. {@code /api/products/12/image/0}; null if no product id. */
         private String productImageUrl;
         /** Height for standard-size lines; custom orders use custom_size.height. */
+        @JsonProperty("customerHeight")
+        @JsonAlias({ "customer_height" })
         private String customerHeight;
 
         public OrderItemDto() {}

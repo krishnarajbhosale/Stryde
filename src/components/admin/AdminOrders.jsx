@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react'
 import { getOrders, downloadOrdersExcel, downloadOrderInvoicePdf, getCustomSizeById } from '../../api/adminApi'
 import { formatOrderInvoiceNumber } from '../../utils/orderInvoice'
 
+/** API may expose camelCase or snake_case; DB-backed height lives here for standard sizes. */
+function orderItemCustomerHeight(item) {
+  if (!item) return ''
+  const v = item.customerHeight ?? item.customer_height
+  const t = v != null ? String(v).trim() : ''
+  return t
+}
+
 /** Human-readable payment type for admin list/detail. */
 function orderPaymentLabel(order) {
   const method = (order.paymentMethod || '').toLowerCase().trim()
@@ -161,7 +169,9 @@ export default function AdminOrders() {
                   <td className="py-3 pr-4 text-[#E5E5E5]/80">
                     {o.items && o.items.length > 0 ? (
                       <ul className="list-none p-0 m-0 space-y-2 max-w-[14rem]">
-                        {o.items.map((i, idx) => (
+                        {o.items.map((i, idx) => {
+                          const lineH = orderItemCustomerHeight(i)
+                          return (
                           <li key={idx} className="flex gap-2 items-center text-xs">
                             <OrderLineThumb item={i} />
                             <span>
@@ -169,12 +179,13 @@ export default function AdminOrders() {
                                 {i.productName} ({i.sizeName}) × {i.quantity}
                                 {i.customSizeId ? ' [Custom]' : ''}
                               </span>
-                              {i.customerHeight && String(i.customerHeight).trim() ? (
-                                <span className="text-white">{` · H: ${String(i.customerHeight).trim()}`}</span>
+                              {lineH ? (
+                                <span className="text-white">{` · H: ${lineH}`}</span>
                               ) : null}
                             </span>
                           </li>
-                        ))}
+                          )
+                        })}
                       </ul>
                     ) : (
                       '—'
@@ -288,7 +299,9 @@ export default function AdminOrders() {
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-2">Items</p>
                 <ul className="space-y-3 list-none p-0 m-0">
-                  {selectedOrder.items?.map((item, idx) => (
+                  {selectedOrder.items?.map((item, idx) => {
+                    const detailH = orderItemCustomerHeight(item)
+                    return (
                     <li key={idx} className="flex gap-3 items-start">
                       <div className="w-14 h-14 shrink-0 bg-[#222] border border-[#E5E5E5]/20 overflow-hidden">
                         {item.productImageUrl ? (
@@ -309,14 +322,15 @@ export default function AdminOrders() {
                         × {item.quantity} — ₹
                         {item.unitPrice != null ? Number(item.unitPrice).toLocaleString('en-IN') : '0'}
                         {item.customSizeId ? ' [Custom]' : ''}
-                        {item.customerHeight && String(item.customerHeight).trim() ? (
+                        {detailH ? (
                           <span className="block text-white mt-0.5">
-                            Height: {String(item.customerHeight).trim()}
+                            Height: {detailH}
                           </span>
                         ) : null}
                       </div>
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               </div>
 

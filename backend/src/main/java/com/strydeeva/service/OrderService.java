@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -52,19 +53,29 @@ public class OrderService {
         this.emailNotificationService = emailNotificationService;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<OrderResponseDto> getConfirmedOrders() {
         return orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CONFIRMED).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<OrderResponseDto> getAllOrders() {
-        return orderRepository.findAll().stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+        return orderRepository.findAllWithItems().stream()
+                .sorted((a, b) -> {
+                    Instant ca = a.getCreatedAt();
+                    Instant cb = b.getCreatedAt();
+                    if (ca == null && cb == null) return 0;
+                    if (ca == null) return 1;
+                    if (cb == null) return -1;
+                    return cb.compareTo(ca);
+                })
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<OrderResponseDto> getOrdersForCustomer(String customerEmail) {
         if (customerEmail == null || customerEmail.isBlank()) return List.of();
         return orderRepository.findByCustomerEmailIgnoreCaseOrderByCreatedAtDesc(customerEmail).stream()
@@ -334,6 +345,7 @@ public class OrderService {
         }
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public byte[] exportConfirmedOrdersToExcel() {
         List<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CONFIRMED);
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
