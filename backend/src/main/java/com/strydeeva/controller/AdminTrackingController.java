@@ -4,6 +4,7 @@ import com.strydeeva.dto.OrderResponseDto;
 import com.strydeeva.entity.Order;
 import com.strydeeva.repository.OrderRepository;
 import com.strydeeva.service.EmailNotificationService;
+import com.strydeeva.service.InvoicePdfService;
 import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ public class AdminTrackingController {
         OrderResponseDto dto = new OrderResponseDto();
         dto.setId(order.getId());
         dto.setOrderNumber(order.getOrderNumber());
+        dto.setInvoiceNumber(InvoicePdfService.formatInvoiceId(order));
         dto.setCustomerName(order.getCustomerName());
         dto.setCustomerEmail(order.getCustomerEmail());
         dto.setCustomerMobile(order.getCustomerMobile());

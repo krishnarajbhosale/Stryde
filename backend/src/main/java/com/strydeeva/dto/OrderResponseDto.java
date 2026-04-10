@@ -1,5 +1,8 @@
 package com.strydeeva.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -8,6 +11,10 @@ import java.util.List;
 public class OrderResponseDto {
     private Long id;
     private String orderNumber;
+    /** Matches PDF "Invoice ID": INV-ddMMyyyy-###### */
+    @JsonProperty("invoiceNumber")
+    @JsonAlias({ "invoice_number", "invoiceId", "invoice_id" })
+    private String invoiceNumber;
     private String customerEmail;
     private String customerMobile;
     private String customerName;
@@ -42,6 +49,8 @@ public class OrderResponseDto {
         private Long productId;
         /** First catalog image, e.g. {@code /api/products/12/image/0}; null if no product id. */
         private String productImageUrl;
+        /** Height for standard-size lines; custom orders use custom_size.height. */
+        private String customerHeight;
 
         public OrderItemDto() {}
 
@@ -52,7 +61,8 @@ public class OrderResponseDto {
                 BigDecimal unitPrice,
                 Long customSizeId,
                 Long productId,
-                String productImageUrl) {
+                String productImageUrl,
+                String customerHeight) {
             this.productName = productName;
             this.sizeName = sizeName;
             this.quantity = quantity;
@@ -60,6 +70,7 @@ public class OrderResponseDto {
             this.customSizeId = customSizeId;
             this.productId = productId;
             this.productImageUrl = productImageUrl;
+            this.customerHeight = customerHeight;
         }
 
         public String getProductName() { return productName; }
@@ -76,12 +87,16 @@ public class OrderResponseDto {
         public void setProductId(Long productId) { this.productId = productId; }
         public String getProductImageUrl() { return productImageUrl; }
         public void setProductImageUrl(String productImageUrl) { this.productImageUrl = productImageUrl; }
+        public String getCustomerHeight() { return customerHeight; }
+        public void setCustomerHeight(String customerHeight) { this.customerHeight = customerHeight; }
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getOrderNumber() { return orderNumber; }
     public void setOrderNumber(String orderNumber) { this.orderNumber = orderNumber; }
+    public String getInvoiceNumber() { return invoiceNumber; }
+    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
     public String getCustomerEmail() { return customerEmail; }
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
     public String getCustomerMobile() { return customerMobile; }

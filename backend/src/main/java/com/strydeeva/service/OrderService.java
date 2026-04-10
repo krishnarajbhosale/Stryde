@@ -152,6 +152,8 @@ public class OrderService {
             item.setUnitPrice(itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO);
             if (itemReq.getCustomSizeId() != null) {
                 item.setCustomSizeId(itemReq.getCustomSizeId());
+            } else {
+                item.setCustomerHeight(normalizeCustomerHeight(itemReq.getCustomerHeight()));
             }
             order.getItems().add(item);
         }
@@ -199,6 +201,7 @@ public class OrderService {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setPaymentProvider(order.getPaymentProvider());
         dto.setCreatedAt(order.getCreatedAt());
+        dto.setInvoiceNumber(InvoicePdfService.formatInvoiceId(order));
         List<OrderResponseDto.OrderItemDto> itemDtos = new ArrayList<>();
         for (CreateOrderRequestDto.OrderItemRequestDto itemReq : request.getItems()) {
             itemDtos.add(new OrderResponseDto.OrderItemDto(
@@ -208,7 +211,8 @@ public class OrderService {
                     itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO,
                     itemReq.getCustomSizeId(),
                     itemReq.getProductId(),
-                    primaryProductImageUrl(itemReq.getProductId())));
+                    primaryProductImageUrl(itemReq.getProductId()),
+                    itemReq.getCustomSizeId() != null ? null : normalizeCustomerHeight(itemReq.getCustomerHeight())));
         }
         dto.setItems(itemDtos);
         // one-time token to download invoice PDF immediately after placing order
@@ -270,6 +274,8 @@ public class OrderService {
             item.setUnitPrice(itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : BigDecimal.ZERO);
             if (itemReq.getCustomSizeId() != null) {
                 item.setCustomSizeId(itemReq.getCustomSizeId());
+            } else {
+                item.setCustomerHeight(normalizeCustomerHeight(itemReq.getCustomerHeight()));
             }
             order.getItems().add(item);
         }
@@ -369,6 +375,9 @@ public class OrderService {
                     itemsStr.append(item.getProductName()).append(" | ").append(item.getSizeName())
                             .append(" | Qty:").append(item.getQuantity())
                             .append(" | ₹").append(item.getUnitPrice() != null ? item.getUnitPrice() : "0");
+                    if (item.getCustomerHeight() != null && !item.getCustomerHeight().isBlank()) {
+                        itemsStr.append(" | H:").append(item.getCustomerHeight().trim());
+                    }
                 }
                 row.createCell(10).setCellValue(itemsStr.toString());
             }
@@ -406,6 +415,7 @@ public class OrderService {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setPaymentProvider(order.getPaymentProvider());
         dto.setCreatedAt(order.getCreatedAt());
+        dto.setInvoiceNumber(InvoicePdfService.formatInvoiceId(order));
         dto.setItems(order.getItems().stream()
                 .map(item -> new OrderResponseDto.OrderItemDto(
                         item.getProductName(),
@@ -414,9 +424,16 @@ public class OrderService {
                         item.getUnitPrice(),
                         item.getCustomSizeId(),
                         item.getProductId(),
-                        primaryProductImageUrl(item.getProductId())))
+                        primaryProductImageUrl(item.getProductId()),
+                        item.getCustomerHeight()))
                 .collect(Collectors.toList()));
         return dto;
+    }
+
+    private static String normalizeCustomerHeight(String raw) {
+        if (raw == null) return null;
+        String t = raw.trim();
+        return t.isEmpty() ? null : t;
     }
 
     /** Public storefront path for the first product image (same as ProductController). */

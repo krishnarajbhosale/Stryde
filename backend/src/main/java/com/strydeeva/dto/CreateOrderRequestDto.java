@@ -68,6 +68,9 @@ public class CreateOrderRequestDto {
 
         private Long customSizeId;
 
+        /** Height for standard sizes (ignored when {@code customSizeId} is set; custom fit stores height on custom_size). */
+        private String customerHeight;
+
         public Long getProductId() { return productId; }
         public void setProductId(Long productId) { this.productId = productId; }
         public String getProductName() { return productName; }
@@ -80,6 +83,8 @@ public class CreateOrderRequestDto {
         public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
         public Long getCustomSizeId() { return customSizeId; }
         public void setCustomSizeId(Long customSizeId) { this.customSizeId = customSizeId; }
+        public String getCustomerHeight() { return customerHeight; }
+        public void setCustomerHeight(String customerHeight) { this.customerHeight = customerHeight; }
     }
 
     public String getCustomerEmail() { return customerEmail; }

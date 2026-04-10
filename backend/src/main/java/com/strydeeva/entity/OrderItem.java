@@ -34,6 +34,10 @@ public class OrderItem {
     @Column(name = "custom_size_id")
     private Long customSizeId;
 
+    /** Customer height for standard (non-custom) size orders, e.g. "5'4\"" or "162 cm". */
+    @Column(name = "customer_height", length = 64)
+    private String customerHeight;
+
     public OrderItem() {}
 
     public Long getId() { return id; }
@@ -52,4 +56,6 @@ public class OrderItem {
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
     public Long getCustomSizeId() { return customSizeId; }
     public void setCustomSizeId(Long customSizeId) { this.customSizeId = customSizeId; }
+    public String getCustomerHeight() { return customerHeight; }
+    public void setCustomerHeight(String customerHeight) { this.customerHeight = customerHeight; }
 }

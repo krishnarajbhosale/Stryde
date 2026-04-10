@@ -20,6 +20,19 @@ import java.util.List;
 @Service
 public class InvoicePdfService {
 
+    /** IST calendar date so invoice id matches regardless of JVM/host timezone. */
+    private static final ZoneId INVOICE_ID_ZONE = ZoneId.of("Asia/Kolkata");
+
+    /** Same value printed on PDF as "Invoice ID" (INV-ddMMyyyy-######). */
+    public static String formatInvoiceId(Order order) {
+        if (order == null) return "";
+        String datePart = order.getCreatedAt() != null
+                ? DateTimeFormatter.ofPattern("ddMMyyyy").withZone(INVOICE_ID_ZONE).format(order.getCreatedAt())
+                : "NA";
+        String idPart = order.getId() != null ? String.format("%06d", order.getId()) : "000000";
+        return "INV-" + datePart + "-" + idPart;
+    }
+
     // Company details
     private static final String BRAND_NAME = "STRYDEEVA";
     private static final String LEGAL_NAME = "House of AS";
@@ -42,10 +55,11 @@ public class InvoicePdfService {
             float[] lightGray = rgb(0xEE, 0xEE, 0xEE);
             float[] borderGray = rgb(0xCC, 0xCC, 0xCC);
 
-            String invoiceId = "INV-" + (order.getCreatedAt() != null ? DateTimeFormatter.ofPattern("ddMMyyyy").withZone(ZoneId.systemDefault()).format(order.getCreatedAt()) : "NA")
-                    + "-" + (order.getId() != null ? String.format("%06d", order.getId()) : "000000");
+            String invoiceId = formatInvoiceId(order);
 
-            String invoiceDate = order.getCreatedAt() != null ? DateTimeFormatter.ofPattern("dd-MMM-yyyy").withZone(ZoneId.systemDefault()).format(order.getCreatedAt()) : "";
+            String invoiceDate = order.getCreatedAt() != null
+                    ? DateTimeFormatter.ofPattern("dd-MMM-yyyy").withZone(INVOICE_ID_ZONE).format(order.getCreatedAt())
+                    : "";
 
             // Totals
             BigDecimal itemsTotal = calcItemsTotal(order.getItems());
@@ -161,7 +175,11 @@ public class InvoicePdfService {
                     drawText(cs, PDType1Font.HELVETICA, 9, cx0 + 6, yRow + 5, rate.toPlainString(), rgb(0,0,0)); cx0 += colW[2];
                     drawText(cs, PDType1Font.HELVETICA, 9, cx0 + 8, yRow + 5, String.valueOf(qty), rgb(0,0,0)); cx0 += colW[3];
                     drawText(cs, PDType1Font.HELVETICA, 9, cx0 + 6, yRow + 5, amount.toPlainString(), rgb(0,0,0)); cx0 += colW[4];
-                    drawText(cs, PDType1Font.HELVETICA, 9, cx0 + 6, yRow + 5, trimTo(safe(it.getSizeName()), 14), rgb(0,0,0));
+                    String remarks = safe(it.getSizeName());
+                    if (it.getCustomerHeight() != null && !it.getCustomerHeight().isBlank()) {
+                        remarks = remarks + " / H:" + it.getCustomerHeight().trim();
+                    }
+                    drawText(cs, PDType1Font.HELVETICA, 9, cx0 + 6, yRow + 5, trimTo(remarks, 22), rgb(0,0,0));
                     index++;
                     if (yRow < 220) break; // keep 1 page simple
                 }
