@@ -37,6 +37,7 @@ function CheckoutPage() {
     address: '',
     city: '',
     pinCode: '',
+    gstNumber: '',
   })
 
   useEffect(() => {
@@ -351,6 +352,16 @@ function CheckoutPage() {
                     required
                   />
                 </div>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={form.gstNumber}
+                  onChange={handleChange}
+                  placeholder="GSTIN (optional)"
+                  className={inputUnderline}
+                  aria-label="GSTIN optional"
+                  autoComplete="off"
+                />
               </section>
 
               <div className="border-t border-[#E5E5E5]/20 pt-6">
@@ -466,6 +477,16 @@ function CheckoutPage() {
                     required
                   />
                 </div>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={form.gstNumber}
+                  onChange={handleChange}
+                  placeholder="GSTIN (optional)"
+                  className={inputUnderline}
+                  aria-label="GSTIN optional"
+                  autoComplete="off"
+                />
               </section>
 
               {checkoutHeightError ? <p className="text-xs text-red-400 pt-4">{checkoutHeightError}</p> : null}

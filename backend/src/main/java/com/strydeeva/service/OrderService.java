@@ -23,6 +23,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -75,6 +76,13 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    /** Full order + line items (e.g. admin tracking: sizes, customer height on standard lines). */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Optional<OrderResponseDto> getOrderWithItemsById(Long id) {
+        if (id == null) return Optional.empty();
+        return orderRepository.findByIdWithItems(id).map(this::toDto);
+    }
+
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<OrderResponseDto> getOrdersForCustomer(String customerEmail) {
         if (customerEmail == null || customerEmail.isBlank()) return List.of();
@@ -125,7 +133,7 @@ public class OrderService {
         order.setShippingAddress(request.getShippingAddress() != null ? request.getShippingAddress().trim() : "");
         order.setCity(request.getCity() != null ? request.getCity().trim() : "");
         order.setPinCode(request.getPinCode() != null ? request.getPinCode().trim() : "");
-        order.setGstNumber(request.getGstNumber() != null ? request.getGstNumber().trim() : "");
+        order.setGstNumber(normalizeOptionalGstNumber(request.getGstNumber()));
         order.setPromoCode(request.getPromoCode() != null && !request.getPromoCode().isBlank()
                 ? request.getPromoCode().trim().toUpperCase()
                 : null);
@@ -247,7 +255,7 @@ public class OrderService {
         order.setShippingAddress(request.getShippingAddress() != null ? request.getShippingAddress().trim() : "");
         order.setCity(request.getCity() != null ? request.getCity().trim() : "");
         order.setPinCode(request.getPinCode() != null ? request.getPinCode().trim() : "");
-        order.setGstNumber(request.getGstNumber() != null ? request.getGstNumber().trim() : "");
+        order.setGstNumber(normalizeOptionalGstNumber(request.getGstNumber()));
         order.setPromoCode(request.getPromoCode() != null && !request.getPromoCode().isBlank()
                 ? request.getPromoCode().trim().toUpperCase()
                 : null);
@@ -443,6 +451,13 @@ public class OrderService {
     }
 
     private static String normalizeCustomerHeight(String raw) {
+        if (raw == null) return null;
+        String t = raw.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    /** Empty or whitespace-only GSTIN is stored as null so invoices can omit the field. */
+    private static String normalizeOptionalGstNumber(String raw) {
         if (raw == null) return null;
         String t = raw.trim();
         return t.isEmpty() ? null : t;

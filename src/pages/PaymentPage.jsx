@@ -169,6 +169,7 @@ function PaymentPage() {
     setSubmitError('')
     try {
       const customerName = [checkoutForm.firstName, checkoutForm.lastName].filter(Boolean).join(' ') || 'Customer'
+      const gstTrim = String(checkoutForm.gstNumber ?? '').trim()
       const payload = {
         customerEmail: String(checkoutForm.email || 'guest@strydeeva.com').trim(),
         customerMobile: String(checkoutForm.mobile || '').trim(),
@@ -176,6 +177,7 @@ function PaymentPage() {
         shippingAddress: String(checkoutForm.address || '').trim(),
         city: String(checkoutForm.city || '').trim(),
         pinCode: String(checkoutForm.pinCode || '').trim(),
+        ...(gstTrim ? { gstNumber: gstTrim } : {}),
         promoCode: promo?.code || '',
         promoDiscount: Number(promoDiscount || 0),
         shippingFee: Number(shippingFee || 0),

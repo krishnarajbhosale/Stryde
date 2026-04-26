@@ -70,7 +70,8 @@ public class InvoicePdfService {
             BigDecimal walletUse = nvl(order.getWalletDiscount());
             BigDecimal grandTotal = nvl(order.getTotalAmount());
 
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            try {
                 // Title
                 drawCenteredText(cs, PDType1Font.HELVETICA_BOLD, 28, pageW / 2, pageH - margin, "INVOICE");
                 // top divider
@@ -103,14 +104,18 @@ public class InvoicePdfService {
 
                 // Customer / Bill to / Ship to box (full width)
                 float custTop = topY - boxH - 18;
-                float custH = 74;
+                boolean showCustomerGstin = order.getGstNumber() != null && !safe(order.getGstNumber()).isEmpty();
+                float custH = showCustomerGstin ? 88 : 74;
+                float splitYTop = showCustomerGstin ? custTop - 48 : custTop - 34;
                 drawRect(cs, margin, custTop - custH, pageW - 2 * margin, custH, borderGray, 1, null);
                 float cx = margin + 10;
                 float cy = custTop - 16;
                 cy = drawKeyVal(cs, cx, cy, "Customer Name:", safe(order.getCustomerName()), blue);
+                if (showCustomerGstin) {
+                    cy = drawKeyVal(cs, cx, cy, "Customer GSTIN:", safe(order.getGstNumber()), blue);
+                }
 
                 // Bill to / Ship to split
-                float splitYTop = custTop - 34;
                 float splitH = 40;
                 float fullW = pageW - 2 * margin;
                 float halfW = fullW / 2f;
@@ -196,7 +201,9 @@ public class InvoicePdfService {
                 List<String[]> sumRows = new ArrayList<>();
                 sumRows.add(new String[] { "Subtotal", fmtMoney(itemsTotal) });
                 if (promoDisc.compareTo(BigDecimal.ZERO) > 0) sumRows.add(new String[] { "Discount", "- " + fmtMoney(promoDisc) });
-                sumRows.add(new String[] { "GST (12%)", fmtMoney(gst) });
+                if (gst.compareTo(BigDecimal.ZERO) > 0) {
+                    sumRows.add(new String[] { "GST (12%)", fmtMoney(gst) });
+                }
                 if (shipping.compareTo(BigDecimal.ZERO) > 0) sumRows.add(new String[] { "Shipping", fmtMoney(shipping) });
                 if (cod.compareTo(BigDecimal.ZERO) > 0) sumRows.add(new String[] { "COD Charges", fmtMoney(cod) });
                 if (walletUse.compareTo(BigDecimal.ZERO) > 0) {
@@ -215,6 +222,8 @@ public class InvoicePdfService {
                 drawRect(cs, sumBoxX, grandY - 18, sumBoxW, 18, null, 0, blue);
                 drawText(cs, PDType1Font.HELVETICA_BOLD, 10, sumBoxX + 8, grandY - 12, "Grand Total", rgb(255,255,255));
                 drawRightText(cs, PDType1Font.HELVETICA_BOLD, 10, sumBoxX + sumBoxW - 8, grandY - 12, fmtMoney(grandTotal), rgb(255,255,255));
+            } finally {
+                cs.close();
             }
 
             doc.save(out);

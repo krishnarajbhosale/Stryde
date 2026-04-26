@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getOrders, getTrackingOrder, setTrackingAwb } from '../../api/adminApi'
 
+function orderItemCustomerHeight(item) {
+  if (!item) return ''
+  const v = item.customerHeight ?? item.customer_height
+  const t = v != null ? String(v).trim() : ''
+  return t
+}
+
 export default function AdminTracking() {
   const [orderId, setOrderId] = useState('')
   const [awb, setAwb] = useState('')
@@ -112,6 +119,28 @@ export default function AdminTracking() {
               <span className="text-[#E5E5E5]/60">Status:</span> {order.status || '—'}
             </p>
           </div>
+
+          {order.items && order.items.length > 0 && (
+            <div className="border-t border-[#E5E5E5]/20 pt-3">
+              <p className="text-xs uppercase tracking-wide text-[#E5E5E5]/60 mb-2">Items</p>
+              <ul className="list-none p-0 m-0 space-y-2 text-sm">
+                {order.items.map((item, idx) => {
+                  const h = orderItemCustomerHeight(item)
+                  return (
+                    <li key={idx} className="text-[#E5E5E5]/90">
+                      <span className="text-[#E5E5E5]">
+                        {item.productName || '—'} ({item.sizeName || '—'}) × {item.quantity ?? 0}
+                        {item.customSizeId ? ' [Custom]' : ''}
+                      </span>
+                      {h ? (
+                        <span className="text-white ml-1">· Height: {h}</span>
+                      ) : null}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs uppercase tracking-wide text-[#E5E5E5]/70 mb-2">

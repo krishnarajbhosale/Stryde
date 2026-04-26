@@ -4,7 +4,7 @@ import com.strydeeva.dto.OrderResponseDto;
 import com.strydeeva.entity.Order;
 import com.strydeeva.repository.OrderRepository;
 import com.strydeeva.service.EmailNotificationService;
-import com.strydeeva.service.InvoicePdfService;
+import com.strydeeva.service.OrderService;
 import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,29 +19,23 @@ public class AdminTrackingController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminTrackingController.class);
     private final OrderRepository orderRepository;
+    private final OrderService orderService;
     private final EmailNotificationService emailNotificationService;
 
-    public AdminTrackingController(OrderRepository orderRepository, EmailNotificationService emailNotificationService) {
+    public AdminTrackingController(
+            OrderRepository orderRepository,
+            OrderService orderService,
+            EmailNotificationService emailNotificationService) {
         this.orderRepository = orderRepository;
+        this.orderService = orderService;
         this.emailNotificationService = emailNotificationService;
     }
 
     @GetMapping("/orders/{id}")
     public ResponseEntity<OrderResponseDto> getOrder(@PathVariable Long id) {
-        Order order = orderRepository.findById(id).orElse(null);
-        if (order == null) return ResponseEntity.notFound().build();
-        OrderResponseDto dto = new OrderResponseDto();
-        dto.setId(order.getId());
-        dto.setOrderNumber(order.getOrderNumber());
-        dto.setInvoiceNumber(InvoicePdfService.formatInvoiceId(order));
-        dto.setCustomerName(order.getCustomerName());
-        dto.setCustomerEmail(order.getCustomerEmail());
-        dto.setCustomerMobile(order.getCustomerMobile());
-        dto.setStatus(order.getStatus() != null ? order.getStatus().name() : "");
-        dto.setCreatedAt(order.getCreatedAt());
-        dto.setTotalAmount(order.getTotalAmount());
-        dto.setAwbNumber(order.getAwbNumber());
-        return ResponseEntity.ok(dto);
+        return orderService.getOrderWithItemsById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     public static class UpdateAwbDto {
